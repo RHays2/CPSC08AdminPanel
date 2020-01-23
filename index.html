@@ -1,0 +1,154 @@
+<!-- index.html
+CPSC 08 Senior Design group
+Admin Panel Web App -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>Tour Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/99703f365f.js" crossorigin="anonymous"></script>
+
+    <script src="actions.js"></script>
+
+</head>
+
+<body>
+    <div id="home-page">
+        <p id="instructions">
+            To create a tour, you must add a title and stops. You may also give a description.
+            Tours are by default admin-only but can also be set available for all-users.
+            Tours must have at least one stop and may have up to 25 stops. 
+            To create a stop, you must add a title, location and media. Media is the pictures and 
+            videos you want associated with that stop.
+            To create a media asset, you must select the image or video from your computer, then 
+            give it a title and description.  
+        </p>
+        <button id="create-tour" type="button">Create new tour</button>
+        <button id="edit-tour" type="button">Edit existing tour</button>
+    </div>
+
+    <div id="tour-page">
+        <input type="text" name="tour-title" class="title" id="tour-title">
+        <input type="text" name="tour-description" class="description" id="stop-description">
+        <div id="stop-map"></div>
+
+        <!--
+        A table of stops that have been added to the tour
+        This will be updated with javascript as stops are added
+        Rows should display the name of the stop
+        They should be clickable, at which point the stop's location is
+        displayed on the map 
+        The remove-stop button removes the selected item from the table 
+        TODO: The table will be numbered, and the user can drag and drop to sort 
+        -->
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <h2>Stops</h2>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tour-stops"></tbody>
+        </table>
+        <div id="selected-stop"></div>
+        <button id="remove-stop" type="button">Remove Stop</button>
+        <div id="remove-stop-warning" class="warning">
+            Are you sure you want to remove this stop from this tour? 
+            <button id="cancel-remove-stop" type="button">Cancel</button>
+            <button id="confirm-remove-stop" type="button">Confirm</button>
+        </div> 
+
+        <button id="add-stop" type="button">Add Stop</button>
+        <div id="add-stop-popup">
+            <button id="create-stop" type="button">Create new stop</button>
+            <label for="existing-stop">Choose From Stops Uploaded to the Database</label>
+            <select name="existing-stop" id="existing-stop">
+                <option selected disabled value="">Select a stop...</option>
+                <!--<option value="Stop Title">Stop Title</option>-->
+            </select>
+            <button id="cancel-add-stop" type="button">Cancel</button>
+            <button id="confirm-add-stop" type="button">Confirm</button>
+        </div>
+
+        <div id="no-tour-title-warning" class="warning">A tour must have a title.</div>
+        <div id="unique-tour-title-warning" class="warning">The tour's title must be unique</div>
+        <button id="save-tour" type="button">Save tour</button>
+
+
+    </div>
+
+    <div id="stop-page">
+        <input type="text" name="stop-title" class="title" id="stop-title">
+        <input type="text" name="stop-description" class="description" id="stop-description">
+        <div id="stop-map"></div>
+
+        <!--
+        A table of media items that have been added to the stop
+        This will be updated with javascript as media items are added
+        Rows should display the name of the media item
+        They should be clickable, at which point the media item is
+        displayed in the "selected-media" div
+        The remove-media button removes the selected item from the table 
+        -->
+        <table>
+            <thead>
+                <tr>
+                    <th>
+                        <h2>Media Items</h2>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="stop-media-items"></tbody>
+        </table>
+        <div id="selected-media"></div>
+        <button id="remove-media" type="button">Remove Media</button>
+        <div id="remove-media-warning" class="warning">
+            Are you sure you want to remove this media item from this stop? 
+            <button id="cancel-remove-media" type="button">Cancel</button>
+            <button id="confirm-remove-media" type="button">Confirm</button>
+        </div> 
+
+        <button id="add-media" type="button">Add Media</button>
+        <div id="add-media-popup">
+            <button id="create-media" type="button">Create new Media</button>
+            <label for="existing-media">Choose From Media Uploaded to the Database</label>
+            <select name="existing-media" id="existing-media">
+                <option selected disabled value="">Select a media item...</option>
+                <!--<option value="Media Title">Media Title</option>-->
+            </select>
+            <button id="cancel-add-media" type="button">Cancel</button>
+            <button id="confirm-add-media" type="button">Confirm</button>
+        </div>
+
+        <div id="no-stop-title-warning" class="warning">A stop must have a title.</div> 
+        <div id="unique-stop-title-warning" class="warning">The title must be unique</div>
+        <button id="save-stop" type="button">Save stop</button>
+    </div>
+
+    <div id="media-page">
+        <input type="file" name="media-item" accept="image/*,image/*" id="media-item">
+        <input type="text" name="media-title" class="title" id="media-title">
+        <input type="text" name="media-description" class="description" id="media-description"> 
+        <div id="unique-media-title-warning" class="warning">The title must be unique</div>
+        <button id="upload-media" type="button">Upload</button>
+    </div>
+
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUBdf6vAxGfo1W9vUn222t2KecWuIbAJg&libraries=places&callback=initMap">
+    </script>
+</body>
+
+</html>
