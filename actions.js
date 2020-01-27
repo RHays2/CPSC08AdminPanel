@@ -8,12 +8,14 @@ var map, currentLocation, infoWindow, selectedLocation;
 
 
 window.addEventListener("load", function () {
+    // MARK: Navigation event listeners 
+
     // On the home page, the create tour button takes us to the tour page
     // and the map is initialized
     $('#create-tour').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#tour-page"]').tab('show');
-        initMap("tour-map");
+        initTourMap();
     });  
     
     // On the home page, the "edit this tour" button takes us to the tour page
@@ -23,13 +25,13 @@ window.addEventListener("load", function () {
         e.preventDefault();
         $('#nav-pills a[href="#tour-page"]').tab('show');
         edit = true;
-        initMap("tour-map");
+        initTourMap();
     });
 
     $('#create-stop').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');
-        initMap("stop-map");
+        initStopMap();
     });
 
     $('#create-media').click(function(e){
@@ -40,14 +42,14 @@ window.addEventListener("load", function () {
     $('#upload-media').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');
-        initMap("stop-map");
+        initStopMap();
     });
 
     $('#save-stop').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#tour-page"]').tab('show');
         edit = true;
-        initMap("tour-map");
+        initTourMap();
     });
     
     $('#save-tour').click(function(e){
@@ -55,19 +57,74 @@ window.addEventListener("load", function () {
         $('#nav-pills a[href="#home-page"]').tab('show');
     });
     
+    $('#stop-table').on('click', '.clickable-row', function(e) {
+        $(this).addClass('bg-info').siblings().removeClass('bg-info');
+    });
+
+
 });
 
-function initMap(mapName) {
-    map = new google.maps.Map(document.getElementById(mapName), {
+function initTourMap() {
+    map = new google.maps.Map(document.getElementById("tour-map"), {
         center: {
             lat: 47.667122,
             lng: -117.400617
         },
-        zoom: 8
+        zoom: 13
     });
     
-    // Try HTML5 geolocation.
-    if (navigator.geolocation) {
+    if (currentLocation) { // use the current location we already have
+        currentLocation = new google.maps.Marker({
+            position: currentLocation["position"], // users current position
+            map: map,
+            icon: { // use a blue marker for current location 
+                url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            }
+        });
+        map.setCenter(currentLocation["position"]);
+    } else if (navigator.geolocation) { // Try HTML5 geolocation.
+        navigator.geolocation.getCurrentPosition(function (position) {
+            var pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            map.setCenter(pos)
+            currentLocation = new google.maps.Marker({
+                position: pos, // users current position
+                map: map,
+                icon: { // use a blue marker for current location 
+                    url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                }
+            });
+        }, function () {
+            handleLocationError(true, infoWindow, map.getCenter());
+        });
+    } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, infoWindow, map.getCenter());
+    }
+}
+
+function initStopMap() {
+    map = new google.maps.Map(document.getElementById("stop-map"), {
+        center: {
+            lat: 47.667122,
+            lng: -117.400617
+        },
+        zoom: 13
+    });
+    
+
+    if (currentLocation) { // use the current location we already have
+        currentLocation = new google.maps.Marker({
+            position: currentLocation["position"], // users current position
+            map: map,
+            icon: { // use a blue marker for current location 
+                url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            }
+        });
+        map.setCenter(currentLocation["position"]);
+    } else if (navigator.geolocation) { // Try HTML5 geolocation.
         navigator.geolocation.getCurrentPosition(function (position) {
             var pos = {
                 lat: position.coords.latitude,
@@ -88,7 +145,7 @@ function initMap(mapName) {
         // Browser doesn't support Geolocation
         handleLocationError(false, infoWindow, map.getCenter());
     }
-
+    // on the stop map, place a marker where the user clicks
     map.addListener('click', function (e) {
         replaceMarkerAndPanTo(e.latLng);
     });

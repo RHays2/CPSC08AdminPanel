@@ -41,10 +41,10 @@ Admin Panel Web App -->
             <a href="#home-page" class="nav-link active" data-toggle="pill">Home</a>
         </li>
         <li class="nav-item">
-            <a href="#tour-page" class="nav-link" data-toggle="pill">Tour</a>
+            <a href="#tour-page" class="nav-link" data-toggle="pill" onclick="initTourMap()">Tour</a>
         </li>
         <li class="nav-item">
-            <a href="#stop-page" class="nav-link" data-toggle="pill">Stop</a>
+            <a href="#stop-page" class="nav-link" data-toggle="pill" onclick="initStopMap()">Stop</a>
         </li>
         <li class="nav-item">
             <a href="#media-page" class="nav-link" data-toggle="pill">Media</a>
@@ -106,89 +106,133 @@ Admin Panel Web App -->
         </div>
 
         <div class="tab-pane fade" id="tour-page">
-            <input type="text" name="tour-title" class="title" id="tour-title" required>
-            <textarea rows="7" cols="50" name="tour-description" class="description" id="stop-description"></textarea>
-            <div id="tour-map" class="map"></div>
-        
-            <!--
-            A table of stops that have been added to the tour
-            This will be updated with javascript as stops are added
-            Rows should display the name of the stop
-            They should be clickable, at which point the stop's location is
-            displayed on the map 
-            The remove-stop button removes the selected item from the table 
-            TODO: The table will be numbered, and the user can drag and drop to sort 
-            -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>
-                            <h2>Stops</h2>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="tour-stops"></tbody>
-            </table>
-                
-            <!--
-                Button and popup (modal) for removing a stop
-                https://getbootstrap.com/docs/4.0/components/modal/
-            -->
-            <button class="btn btn-danger" data-toggle="modal" data-target="#remove-stop-warning" id="remove-stop" type="button">Remove Stop</button>
-            <div class="modal fade" id="remove-stop-warning"  tabindex="-1" role="dialog" aria-labelledby="remove-media-modal-title" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content"> 
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="remove-stop-modal-title">Removing Stop</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="row">
+                            <div id="tour-map" class="map"></div>
                         </div>
-                        <div class="modal-body">
-                            <div> Are you sure you want to remove this stop? </div>
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <label for="tour-title">Tour Name:</label>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="text" name="tour-title" class="title" id="tour-title" required>
+                            </div>
                         </div>
-                        <div class="modal-footer">
-                             <button class="btn btn-dark" id="cancel-remove-stop" type="button" data-dismiss="modal">Cancel</button>
-                            <button class="btn btn-primary" id="confirm-remove-stop" type="button">Confirm</button>
+                        <div class="row">
+                            <label class="description" for="tour-description">Tour Description:</label>
+                        </div>
+                        <div class="row">
+                            <textarea rows="5" cols="50" name="tour-description" class="description" id="tour-description"></textarea>
                         </div>
                     </div>
-                </div>
-            </div>
+                    <!--The right side of the screen-->
+                    <div class="col-lg-6">
+                        <div class="row">
+                            <!--
+                            A table of stops that have been added to the tour
+                            This will be updated with javascript as stops are added
+                            Rows should display the name of the stop
+                            They should be clickable, at which point the stop's location is
+                            displayed on the map 
+                            The remove-stop button removes the selected item from the table 
+                            TODO: The table will be numbered, and the user can drag and drop to sort 
+                            -->
+                            <div class="card p-2 m-1 bg-dark w-100">
+                                <table id="stop-table" class="table table-hover table-primary w-100">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" colspan="3">
+                                                <h2 class="card-title">Stops</h2>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tour-stops">
+                                        <tr class="clickable-row">
+                                            <td> College Hall </td>
+                                        </tr>
+                                        <tr class="clickable-row">
+                                            <td> Herak </td>
+                                        </tr>
+                                        <tr class="clickable-row">
+                                            <td> Jepson </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!--
+                                Button and popup (modal) for removing a stop
+                                https://getbootstrap.com/docs/4.0/components/modal/
+                            -->
+                            <button class="btn btn-danger" data-toggle="modal" data-target="#remove-stop-warning" id="remove-stop" type="button">Remove Stop</button>
+                            <div class="modal fade" id="remove-stop-warning"  tabindex="-1" role="dialog" aria-labelledby="remove-media-modal-title" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content"> 
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="remove-stop-modal-title">Removing Stop</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                                </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div> Are you sure you want to remove this stop? </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button class="btn btn-dark" id="cancel-remove-stop" type="button" data-dismiss="modal">Cancel</button>
+                                            <button class="btn btn-primary" id="confirm-remove-stop" type="button">Confirm</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-            <!--
-                Button and popup (modal) for adding a stop
-                Adding a stop takes the user to the stop screen
-                https://getbootstrap.com/docs/4.0/components/modal/
-            -->
-            <button class="btn btn-success" data-toggle="modal" data-target="#add-stop-popup" id="add-stop" type="button">Add Stop</button>
-            <div class="modal fade" id="add-stop-popup"  tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                    <div class="modal-content"> 
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="add-stop-modal-title">Add a stop</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
+                            <!--
+                                Button and popup (modal) for adding a stop
+                                Adding a stop takes the user to the stop screen
+                                https://getbootstrap.com/docs/4.0/components/modal/
+                            -->
+                            <!--TODO: Have this button moved to the right-->
+                            <button class="btn btn-success" data-toggle="modal" data-target="#add-stop-popup" id="add-stop" type="button">Add Stop</button>
+                            <div class="modal fade" id="add-stop-popup"  tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content"> 
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="add-stop-modal-title">Add a stop</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                                </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <label for="existing-stop">Choose from previously created stops</label>
+                                            <select name="existing-stop" id="existing-stop">
+                                                <option selected disabled value="">Select a stop...</option>
+                                                <!--<option value="Stop Title">Stop Title</option>-->
+                                            </select>
+                                            <label for="create-stop">Or create a new stop</label>
+                                            <button class="btn btn-success" id="create-stop" type="button" data-dismiss="modal">Create new stop</button>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button class="btn btn-dark" id="cancel-add-stop" type="button" data-dismiss="modal">Cancel</button>
+                                            <button class="btn btn-primary" id="confirm-add-stop" type="button">Confirm</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="modal-body">
-                            <label for="existing-stop">Choose from previously created stops</label>
-                            <select name="existing-stop" id="existing-stop">
-                                <option selected disabled value="">Select a stop...</option>
-                                <!--<option value="Stop Title">Stop Title</option>-->
+                        <div class="row">
+                            <!--TODO: smaller admin-only drop down, separate from save-->
+                            <select name="admin-only" id="admin-only">
+                                <option selected value="admin-only">Admin-only</option>
+                                <option value="all-users">All-users</option>
                             </select>
-                            <label for="create-stop">Or create a new stop</label>
-                            <button class="btn btn-success" id="create-stop" type="button" data-dismiss="modal">Create new stop</button>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-dark" id="cancel-add-stop" type="button" data-dismiss="modal">Cancel</button>
-                            <button class="btn btn-primary" id="confirm-add-stop" type="button">Confirm</button>
+                            <button class="btn btn-success btn-lg" id="save-tour" type="button">Save tour</button>                                
                         </div>
                     </div>
                 </div>
-            </div>
+            </div>        
+            
             <div class="alert alert-danger" role="alert" id="no-tour-title-warning" class="warning">A tour must have a title.</div>
             <div class="alert alert-danger" role="alert" id="unique-tour-title-warning" class="warning">The tour's title must be unique</div>
-            <button class="btn btn-success" id="save-tour" type="button">Save tour</button>
         </div>
 
         <div class="tab-pane fade" id="stop-page">
