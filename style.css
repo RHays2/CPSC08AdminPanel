@@ -15,3 +15,19 @@
 .btn-save {
     font-size: 24px;
 }
+
+#sign-in-page {
+    background-color: #152850;
+}
+
+#sign-in-page img {
+    border: 0;
+}
+
+#sign-in-page label {
+    color: white;
+}
+
+#sign-in-page input{
+    width: 100%;
+}
