@@ -5,7 +5,7 @@
 "use strict";
 var edit = false;
 var map, currentLocation, infoWindow, selectedLocation;
-
+var credentials = {"admin": "password", "me": "12345"}
 
 window.addEventListener("load", function () {
     // MARK: Navigation event listeners 
@@ -65,7 +65,34 @@ window.addEventListener("load", function () {
         $(this).addClass('bg-info').siblings().removeClass('bg-info');
     });
 
+    // TODO: this code also runs on index.html and fails as it should
+    var passwordField = document.getElementById("password");
+    // Execute a function when the user releases a key on the keyboard
+    passwordField.addEventListener("keyup", function(e) {
+        // Number 13 is the "Enter" key on the keyboard
+        if (event.keyCode === 13) {
+            e.preventDefault();
+            document.getElementById("sign-in").click();
+        }
+    });
+
 });
+
+function attemptSignIn() {
+    var username = document.getElementById("username").value;
+    var password = document.getElementById("password").value;
+    if (username in credentials) {
+        if (password === credentials[username]) {
+            window.location.href='index.html';
+        } else {
+            $("#password").popover({ title: 'Error', content: "Incorrect Password"});
+            $("#password").click();
+        }
+    } else {
+        $("#username").popover({ title: 'Error', content: "Unknown Username"});
+        $("#username").click();
+    }
+}
 
 function initTourMap() {
     map = new google.maps.Map(document.getElementById("tour-map"), {
