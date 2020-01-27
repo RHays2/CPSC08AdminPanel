@@ -1,0 +1,13 @@
+.map {
+    height: 400px;  /* The height is 400 pixels */
+    width: 50%;  /* The width is half the width of the web page */
+}
+
+.hidden {
+    display: none;
+}
+
+#instructions {
+    font-size: 16pt;
+
+}
