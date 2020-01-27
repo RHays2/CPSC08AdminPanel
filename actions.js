@@ -61,6 +61,9 @@ window.addEventListener("load", function () {
         $(this).addClass('bg-info').siblings().removeClass('bg-info');
     });
 
+    $('#media-table').on('click', '.clickable-row', function(e) {
+        $(this).addClass('bg-info').siblings().removeClass('bg-info');
+    });
 
 });
 
@@ -113,7 +116,6 @@ function initStopMap() {
         },
         zoom: 13
     });
-    
 
     if (currentLocation) { // use the current location we already have
         currentLocation = new google.maps.Marker({
@@ -152,7 +154,6 @@ function initStopMap() {
 }
 
 function replaceMarkerAndPanTo(latLng) {
-    infoWindow.close()
     var marker = new google.maps.Marker({
         position: latLng,
         map: map
