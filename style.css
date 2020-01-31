@@ -1,0 +1,33 @@
+.map {
+    height: 250px;  /* The height is 400 pixels */
+    width: 400px;  /* The width is half the width of the web page */
+}
+
+.hidden {
+    display: none;
+}
+
+#instructions {
+    font-size: 16pt;
+
+}
+
+.btn-save {
+    font-size: 24px;
+}
+
+#sign-in-page {
+    background-color: #152850;
+}
+
+#sign-in-page img {
+    border: 0;
+}
+
+#sign-in-page label {
+    color: white;
+}
+
+#sign-in-page input{
+    width: 100%;
+}
