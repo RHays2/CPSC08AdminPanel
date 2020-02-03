@@ -262,8 +262,8 @@ Admin Panel Web App -->
                                                     </button>
                                             </div>
                                             <div class="modal-body">
-                                                <label for="existing-stop">Choose from previously created stops</label>
-                                                <select name="existing-stop" id="existing-stop">
+                                                <label for="existing-stops">Choose from previously created stops</label>
+                                                <select name="existing-stops" id="existing-stops">
                                                     <option selected disabled value="">Select a stop...</option>
                                                     <!--<option value="Stop Title">Stop Title</option>-->
                                                 </select>
@@ -441,10 +441,10 @@ Admin Panel Web App -->
                     </div>
                     <div class="col-lg-6">
                         <div class="row mt-1">
-                            <input type="file" name="media-item" accept="image/*,video/*" id="media-item">
+                            <input type="file" name="media-item" accept="image/*,video/*" id="media-item" onchange="loadFile(event)">
                         </div>
                         <div class="row mt-2">
-                            <img id="media-preview" height="250px" width="400px">
+                            <img id="media-preview" height="250px" width="400px"> <!--TODO: use a size that reflects what it will look like on mobile-->
                         </div>
                     </div>
                 </div>
