@@ -140,7 +140,7 @@ Admin Panel Web App -->
                                             </button>
                                     </div>
                                     <div class="modal-body">
-                                        <select name="existing-media" id="existing-media">
+                                        <select name="edit-existing-media" id="edit-existing-media">
                                             <option selected disabled value="">Select a media item...</option>
                                             <!--<option value="Tour Title">Tour Title</option>-->
                                         </select>
@@ -449,10 +449,10 @@ Admin Panel Web App -->
                     </div>
                     <div class="col-lg-6">
                         <div class="row mt-1">
-                            <input type="file" name="media-item" accept="image/*,image/*" id="media-item">
+                            <input type="file" name="media-item" accept="image/*,video/*" id="media-item">
                         </div>
                         <div class="row mt-2">
-                            <img height="250px" width="400px"></img>
+                            <img id="media-preview" height="250px" width="400px">
                         </div>
                     </div>
                 </div>

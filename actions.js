@@ -2,13 +2,20 @@
 // Group 08 2019-2020
 // Admin Panel Web App 
 
-"use strict";
+
 var edit = false;
+
+// variables for the map
 var map, currentLocation, infoWindow, selectedLocation;
-var credentials = {"admin": "password", "me": "12345"}
+
+
+// variables to hold the list of created media, stops, and tours
+// these will be filled with information from the database
+// they are each a dictionary with keys representing titles
+var existingMedia = {}, existingStops = {}, existingTour = {};
 
 window.addEventListener("load", function () {
-    // MARK: Navigation event listeners 
+    // MARK: Home page event listeners 
 
     // On the home page, the create tour button takes us to the tour page
     // and the map is initialized
@@ -28,6 +35,9 @@ window.addEventListener("load", function () {
         initTourMap();
     });
 
+    // On the home page, the "edit this stop" button takes us to the stop page
+    // Edit mode is set to true
+    // The map is initialized
     $('#start-edit-stop').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');
@@ -35,77 +45,123 @@ window.addEventListener("load", function () {
         initStopMap();
     });
 
+    // On the home page, the "edit this media item" button takes us to the stop page
+    // Edit mode is set to true
     $('#start-edit-media').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#media-page"]').tab('show');
         edit = true;
     });
 
+    // MARK: tour page event listeners
+
+    // On the tour page, the "Create new stop" button 
+    // takes us to the stop page
     $('#create-stop').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');
         initStopMap();
     });
 
+    // On the tour page, the "Save tour" button returns us to the 
+    // home page
+    $('#save-tour').click(function(e){
+        e.preventDefault();
+        $('#nav-pills a[href="#home-page"]').tab('show');
+    });
+
+    // clicking a row in the stop table highlights it
+    $('#stop-table').on('click', '.clickable-row', function(e) {
+        $(this).addClass('bg-info').siblings().removeClass('bg-info');
+    });
+
+
+    // MARK: stop page event listeners
+
+    // fill the add existing media drop down with existing media 
+    var existingMediaSelect = document.getElementById("existing-media");
+    for (var title of Object.keys(existingMedia)) {
+        var option = document.createElement('option');
+        option.text = option.value = title;
+        option.selected = true;
+        existingMediaSelect.add(option);
+        console.log("added", title)
+    }
+
+    // On the stop page, the "Create new media" button
+    // takes us to the media page
     $('#create-media').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#media-page"]').tab('show');
     });
 
-    $('#upload-media').click(function(e){
-        e.preventDefault();
-        $('#nav-pills a[href="#stop-page"]').tab('show');
-        initStopMap();
-    });
-
+    // On the stop page, the "Save stop" button returns us
+    // to the tour page
     $('#save-stop').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#tour-page"]').tab('show');
         edit = true;
         initTourMap();
     });
-    
-    $('#save-tour').click(function(e){
-        e.preventDefault();
-        $('#nav-pills a[href="#home-page"]').tab('show');
-    });
-    
-    $('#stop-table').on('click', '.clickable-row', function(e) {
-        $(this).addClass('bg-info').siblings().removeClass('bg-info');
-    });
 
+    // clicking a row in the media table highlights it
     $('#media-table').on('click', '.clickable-row', function(e) {
         $(this).addClass('bg-info').siblings().removeClass('bg-info');
     });
 
-    // TODO: this code also runs on index.html and fails as it should
-    var passwordField = document.getElementById("password");
-    // Execute a function when the user releases a key on the keyboard
-    passwordField.addEventListener("keyup", function(e) {
-        // Number 13 is the "Enter" key on the keyboard
-        if (event.keyCode === 13) {
-            e.preventDefault();
-            document.getElementById("sign-in").click();
+    // MARK: media page event listeners
+
+    // On the media page, the "Upload Media" button
+    $('#upload-media').click(function(e) {
+        e.preventDefault();
+        // TODO: save the image as well
+        var title = document.getElementById("media-title");
+        var description = document.getElementById("media-description")
+        var titleValue = title.value;
+        var descriptionValue = description.value;
+        if (!titleValue) { // there must be a title
+            $("#media-title").popover({ title: 'Error', content: "Title required"});
+            $("#media-title").click();
+        } else if (Object.keys(existingMedia).includes(titleValue)) { // title must be unique
+            $("#media-title").popover({ title: 'Error', content: "Title must be unique"});
+            $("#media-title").click();
+        } else {
+            // save the media item
+            existingMedia[titleValue] = {"description": descriptionValue}
+            var existingMediaSelect = document.getElementById("existing-media");
+            var option = document.createElement('option');
+            option.text = option.value = titleValue;
+            option.selected = true;
+            existingMediaSelect.add(option);
+            // navigate back to the stop page
+            $('#nav-pills a[href="#stop-page"]').tab('show');
+            initStopMap()
+            $('#add-media-popup').modal('show'); // bring back up the modal
         }
     });
 
-});
+    // Hide the warning next time the media-title box is clicked
+    $('#media-title').on('input', function(e) {
+        $("#media-title").popover('dispose');
+    }); 
 
-function attemptSignIn() {
-    var username = document.getElementById("username").value;
-    var password = document.getElementById("password").value;
-    if (username in credentials) {
-        if (password === credentials[username]) {
-            window.location.href='index.html';
-        } else {
-            $("#password").popover({ title: 'Error', content: "Incorrect Password"});
-            $("#password").click();
-        }
-    } else {
-        $("#username").popover({ title: 'Error', content: "Unknown Username"});
-        $("#username").click();
-    }
-}
+
+    // TODO: when a file is uploaded it should be displayed
+    // $("#media-item").change(function() {
+    //     loadFile(this);
+    // });
+
+    // function loadFile(input) {
+    //     if (input.files && input.files[0]) {
+    //         var reader = new FileReader();
+            
+    //         reader.onload = function (e) {
+    //             $('#media-preview').attr('src', e.target.result);
+    //         }
+    //         reader.readAsDataURL(input.files[0]);
+    //     }
+    // };
+});
 
 function initTourMap() {
     map = new google.maps.Map(document.getElementById("tour-map"), {
