@@ -109,6 +109,19 @@ window.addEventListener("load", function () {
         $(this).addClass('bg-info').siblings().removeClass('bg-info');
     });
 
+    // confirming add media puts it in the table
+    $('#confirm-add-media').click(function() {
+        var existingMediaSelect = document.getElementById("existing-media");
+        updateMediaTable(existingMediaSelect.value);
+    })
+
+    // remove a media item from the table
+    $('#confirm-remove-media').click(function() {
+        tableBody = document.getElementById("stop-media");
+        selectedRow = document.querySelector('#stop-media > .bg-info');
+        tableBody.removeChild(selectedRow);
+    });
+
     // MARK: media page event listeners
 
     // On the media page, the "Upload Media" button
@@ -128,10 +141,11 @@ window.addEventListener("load", function () {
         } else {
             // save the media item
             existingMedia[titleValue] = {"description": descriptionValue}
+            // make an option in the add media modal's dropdown
             var existingMediaSelect = document.getElementById("existing-media");
             var option = document.createElement('option');
             option.text = option.value = titleValue;
-            option.selected = true;
+            option.selected = true; // the newly created media should be selected
             existingMediaSelect.add(option);
             // navigate back to the stop page
             $('#nav-pills a[href="#stop-page"]').tab('show');
@@ -140,7 +154,7 @@ window.addEventListener("load", function () {
         }
     });
 
-    // Hide the warning next time the media-title box is clicked
+    // Remove the warning next time the media-title box is clicked
     $('#media-title').on('input', function(e) {
         $("#media-title").popover('dispose');
     }); 
@@ -162,6 +176,17 @@ window.addEventListener("load", function () {
     //     }
     // };
 });
+
+
+function updateMediaTable(name) {
+    var mediaTable = document.getElementById("stop-media");
+    var row = mediaTable.insertRow(0);
+    row.className = 'clickable-row';
+    var cell = row.insertCell(0);
+    cell.innerHTML = name;
+    // TODO: Add event listeners when media is double clicked
+    // to display the image and description in a popup
+}
 
 function initTourMap() {
     map = new google.maps.Map(document.getElementById("tour-map"), {
