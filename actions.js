@@ -28,6 +28,19 @@ window.addEventListener("load", function () {
         initTourMap();
     });
 
+    $('#start-edit-stop').click(function(e) {
+        e.preventDefault();
+        $('#nav-pills a[href="#stop-page"]').tab('show');
+        edit = true;
+        initStopMap();
+    });
+
+    $('#start-edit-media').click(function(e) {
+        e.preventDefault();
+        $('#nav-pills a[href="#media-page"]').tab('show');
+        edit = true;
+    });
+
     $('#create-stop').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');

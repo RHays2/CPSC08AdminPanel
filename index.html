@@ -66,9 +66,7 @@ Admin Panel Web App -->
                         give it a title and description.  
                     </p>
                 </div>
-                <div class="row">
-                    <div class="col-lg-3">
-                    </div>
+                <div class="row justify-content-center">
                     <div class="col-lg-3">
                         <button class="btn btn-primary btn-lg" id="create-tour" type="button">Create new tour</button>
                     </div>
@@ -76,6 +74,8 @@ Admin Panel Web App -->
                     Button and popup (modal) for choosing a tour to edit
                     https://getbootstrap.com/docs/4.0/components/modal/
                     -->
+                </div>
+                <div class="row justify-content-center mt-2">
                     <div class="col-lg-3">
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-tour" id="edit-tour" type="button">Edit existing tour</button>
                         <div class="modal fade" id="edit-which-tour"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
@@ -94,8 +94,60 @@ Admin Panel Web App -->
                                         </select>
                                     </div>
                                     <div class="modal-footer">
-                                        <button class="btn btn-dark" id="cancel-remove-stop" type="button" data-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-dark" id="cancel-edit-tour" type="button" data-dismiss="modal">Cancel</button>
                                         <button class="btn btn-primary" id="start-edit-tour" type="button" data-dismiss="modal">Edit this tour</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3">
+                        <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-stop" id="edit-stop" type="button">Edit existing stop</button>
+                        <div class="modal fade" id="edit-which-stop"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content"> 
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modal-choose-stop">Choose a stop to edit</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <select name="existing-tour" id="existing-tour">
+                                            <option selected disabled value="">Select a stop...</option>
+                                            <!--<option value="Stop Title">Stop Title</option>-->
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-dark" id="cancel-edit-stop" type="button" data-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-primary" id="start-edit-stop" type="button" data-dismiss="modal">Edit this stop</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--Edit media-->
+                    <div class="col-lg-3">
+                        <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-media" id="edit-media" type="button">Edit existing media</button>
+                        <div class="modal fade" id="edit-which-media"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-media" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content"> 
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="modal-choose-media">Choose a media item to edit</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <select name="existing-media" id="existing-media">
+                                            <option selected disabled value="">Select a media item...</option>
+                                            <!--<option value="Tour Title">Tour Title</option>-->
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-dark" id="cancel-edit-media" type="button" data-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-primary" id="start-edit-media" type="button" data-dismiss="modal">Edit this media item</button>
                                     </div>
                                 </div>
                             </div>
