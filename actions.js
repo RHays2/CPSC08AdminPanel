@@ -36,7 +36,8 @@ window.addEventListener("load", function () {
         e.preventDefault();
         var selectedTour = document.getElementById("edit-existing-tour").value;
         if (selectedTour === "") {
-            // TODO: popover
+            $("#edit-existing-tour").popover({ title: 'Error', content: "Please select a tour to edit"});
+            $("#edit-existing-tour").click(); // bring up the popover
         } else {
             document.getElementById("tour-title").value = selectedTour;
             document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
@@ -56,6 +57,11 @@ window.addEventListener("load", function () {
         }
     });
 
+    // Remove the warning next time the edit-existing-tour dropdown box is changed
+    $('#edit-existing-tour').on('change', function() {
+        $("#edit-existing-tour").popover('dispose');
+    }); 
+
     // On the home page, the "edit this stop" button takes us to the stop page
     // Edit mode is set to true
     // The map is initialized
@@ -63,7 +69,8 @@ window.addEventListener("load", function () {
         e.preventDefault();
         var selectedStop = document.getElementById("edit-existing-stop").value;
         if (selectedStop === "") {
-            // TODO: popover
+            $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
+            $("#edit-existing-stop").click(); // bring up the popover
         } else {
             document.getElementById("stop-title").value = selectedStop;
             document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
@@ -84,13 +91,19 @@ window.addEventListener("load", function () {
         }
     });
 
+    // Remove the warning next time the edit-existing-stop dropdown box is changed
+    $('#edit-existing-stop').on('change', function() {
+        $("#edit-existing-stop").popover('dispose');
+    }); 
+
     // On the home page, the "edit this media item" button takes us to the stop page
     // Edit mode is set to true
     $('#start-edit-media').click(function(e) {
         e.preventDefault();
         var selectedMedia = document.getElementById("edit-existing-media").value;
         if (selectedMedia === "") {
-            // TODO: popover
+            $("#edit-existing-media").popover({ title: 'Error', content: "Please select a media item to edit"});
+            $("#edit-existing-media").click(); // bring up the popover
         } else {
             document.getElementById("media-title").value = selectedMedia;
             document.getElementById("media-description").value = existingMedia[selectedMedia]["description"];
@@ -100,6 +113,11 @@ window.addEventListener("load", function () {
             edit = true;
         }
     });
+
+    // Remove the warning next time the edit-existing-media dropdown box is changed
+    $('#edit-existing-media').on('change', function() {
+        $("#edit-existing-media").popover('dispose');
+    }); 
 
     // MARK: tour page event listeners
 
