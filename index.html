@@ -70,12 +70,12 @@ Admin Panel Web App -->
                     <div class="col-lg-3">
                         <button class="btn btn-primary btn-lg" id="create-tour" type="button">Create new tour</button>
                     </div>
+                </div>
+                <div class="row justify-content-center mt-2">
                     <!--
                     Button and popup (modal) for choosing a tour to edit
                     https://getbootstrap.com/docs/4.0/components/modal/
                     -->
-                </div>
-                <div class="row justify-content-center mt-2">
                     <div class="col-lg-3">
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-tour" id="edit-tour" type="button">Edit existing tour</button>
                         <div class="modal fade" id="edit-which-tour"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
@@ -88,20 +88,23 @@ Admin Panel Web App -->
                                             </button>
                                     </div>
                                     <div class="modal-body">
-                                        <select name="existing-tour" id="existing-tour">
+                                        <select name="edit-existing-tour" id="edit-existing-tour">
                                             <option selected disabled value="">Select a tour...</option>
                                             <!--<option value="Tour Title">Tour Title</option>-->
                                         </select>
                                     </div>
                                     <div class="modal-footer">
                                         <button class="btn btn-dark" id="cancel-edit-tour" type="button" data-dismiss="modal">Cancel</button>
-                                        <button class="btn btn-primary" id="start-edit-tour" type="button" data-dismiss="modal">Edit this tour</button>
+                                        <button class="btn btn-primary" id="start-edit-tour" type="button">Edit this tour</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
+                    <!--
+                    Button and popup (modal) for choosing a stop to edit
+                    https://getbootstrap.com/docs/4.0/components/modal/
+                    -->
                     <div class="col-lg-3">
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-stop" id="edit-stop" type="button">Edit existing stop</button>
                         <div class="modal fade" id="edit-which-stop"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
@@ -114,14 +117,14 @@ Admin Panel Web App -->
                                             </button>
                                     </div>
                                     <div class="modal-body">
-                                        <select name="existing-tour" id="existing-tour">
+                                        <select name="edit-existing-stop" id="edit-existing-stop">
                                             <option selected disabled value="">Select a stop...</option>
                                             <!--<option value="Stop Title">Stop Title</option>-->
                                         </select>
                                     </div>
                                     <div class="modal-footer">
                                         <button class="btn btn-dark" id="cancel-edit-stop" type="button" data-dismiss="modal">Cancel</button>
-                                        <button class="btn btn-primary" id="start-edit-stop" type="button" data-dismiss="modal">Edit this stop</button>
+                                        <button class="btn btn-primary" id="start-edit-stop" type="button">Edit this stop</button>
                                     </div>
                                 </div>
                             </div>
@@ -147,7 +150,7 @@ Admin Panel Web App -->
                                     </div>
                                     <div class="modal-footer">
                                         <button class="btn btn-dark" id="cancel-edit-media" type="button" data-dismiss="modal">Cancel</button>
-                                        <button class="btn btn-primary" id="start-edit-media" type="button" data-dismiss="modal">Edit this media item</button>
+                                        <button class="btn btn-primary" id="start-edit-media" type="button">Edit this media item</button>
                                     </div>
                                 </div>
                             </div>
@@ -204,15 +207,6 @@ Admin Panel Web App -->
                                         </tr>
                                     </thead>
                                     <tbody id="tour-stops">
-                                        <tr class="clickable-row">
-                                            <td> College Hall </td>
-                                        </tr>
-                                        <tr class="clickable-row">
-                                            <td> Herak </td>
-                                        </tr>
-                                        <tr class="clickable-row">
-                                            <td> Jepson </td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -264,7 +258,7 @@ Admin Panel Web App -->
                                             <div class="modal-body">
                                                 <label for="existing-stops">Choose from previously created stops</label>
                                                 <select name="existing-stops" id="existing-stops">
-                                                    <option selected disabled value="">Select a stop...</option>
+                                                    <option selected disabled value="" id="select-stop-default">Select a stop...</option>
                                                     <!--<option value="Stop Title">Stop Title</option>-->
                                                 </select>
                                                 <label for="create-stop">Or create a new stop</label>
@@ -394,7 +388,7 @@ Admin Panel Web App -->
                                             <div class="modal-body">
                                                 <label for="existing-media">Choose from previously created media</label>
                                                 <select name="existing-media" id="existing-media">
-                                                    <option selected disabled value="">Select a media item...</option>
+                                                    <option selected disabled value="" id="select-media-default">Select a media item...</option>
                                                     <!--<option value="Media Title">Media Title</option>-->
                                                 </select>
                                                 <label for="create-media">Or create a new media item</label>
@@ -402,7 +396,7 @@ Admin Panel Web App -->
                                             </div>
                                             <div class="modal-footer">
                                                 <button class="btn btn-dark" id="cancel-add-media" type="button" data-dismiss="modal">Cancel</button>
-                                                <button class="btn btn-primary" id="confirm-add-media" type="button" data-dismiss="modal">Confirm</button>
+                                                <button class="btn btn-primary" id="confirm-add-media" type="button">Confirm</button>
                                             </div>
                                         </div>
                                     </div>
@@ -444,7 +438,7 @@ Admin Panel Web App -->
                             <input type="file" name="media-item" accept="image/*,video/*" id="media-item" onchange="loadFile(event)">
                         </div>
                         <div class="row mt-2">
-                            <img id="media-preview" height="250px" width="400px"> <!--TODO: use a size that reflects what it will look like on mobile-->
+                            <img id="media-preview" src="" height="250px" width="400px"> <!--TODO: use a size that reflects what it will look like on mobile-->
                         </div>
                     </div>
                 </div>
