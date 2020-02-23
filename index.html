@@ -418,12 +418,14 @@ Admin Panel Web App -->
                 <div class="row">
                     <!--The left column-->
                     <div class="col-lg-6">
-                        <div class="row mt-2">
-                            <div class="col-lg-4">
-                                <label for="media-title">Media Title:</label>
-                            </div>
-                            <div class="col-lg-1">
-                                <input type="text" name="media-title" class="title" id="media-title">
+                        <div class="row">
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <label for="media-title">Media Title:</label>
+                                </div>
+                                <div class="col-lg-8">
+                                    <input type="text" name="media-title" class="title" id="media-title" size="29">
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -431,6 +433,12 @@ Admin Panel Web App -->
                         </div>
                         <div class="row">
                             <textarea rows="7" cols="50" name="media-description" class="description" id="media-description"></textarea>
+                        </div>
+                        <div class="row">
+                            <label class="caption" for="media-caption">Media Caption:</label>
+                        </div>
+                        <div class="row">
+                            <textarea rows="3" cols="50" name="media-caption" class="caption" id="media-caption"></textarea>
                         </div>
                     </div>
                     <div class="col-lg-6">

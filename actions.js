@@ -20,7 +20,6 @@ var existingMedia = {}, existingStops = {}, existingTours = {};
 
 window.addEventListener("load", function () {
     // MARK: Home page event listeners 
-
     // On the home page, the create tour button takes us to the tour page
     // and the map is initialized
     $('#create-tour').click(function(e) {
@@ -108,6 +107,7 @@ window.addEventListener("load", function () {
             document.getElementById("media-title").value = selectedMedia;
             document.getElementById("media-description").value = existingMedia[selectedMedia]["description"];
             document.getElementById("media-preview").src = existingMedia[selectedMedia]["media-item"];
+            document.getElementById("media-caption").value = existingMedia[selectedMedia]["caption"];
             $('#edit-which-media').modal('hide');
             $('#nav-pills a[href="#media-page"]').tab('show');
             edit = true;
@@ -142,6 +142,9 @@ window.addEventListener("load", function () {
         var stopTable = document.getElementById("tour-stops")
         numRows = stopTable.rows.length;
 
+        // TODO: when editing, this things there isn't a title
+        // We could make the title unchangeable in editing and ignore this check
+        // Or we need to figure out a way to make this check when the value is set in js
         if (!titleValue) { // there must be a title
             $("#tour-title").popover({ title: 'Error', content: "Title required"});
             $("#tour-title").click();
@@ -229,7 +232,15 @@ window.addEventListener("load", function () {
             $("#stop-title").click();
         } else {
             // save the stop
-            existingStops[titleValue] = {"description": descriptionValue, "media": addedMedia};
+            existingStops[titleValue] = {
+                "description": descriptionValue, 
+                "media": addedMedia,
+                "location": {
+                    lat: selectedLocation.position.lat(),
+                    lng: selectedLocation.position.lng()
+                }
+            };
+            console.log("saved stop", existingStops[titleValue]);
             // clear addedMedia
             addedMedia = {};
             // make an option in the add stop modal's dropdown
@@ -246,7 +257,7 @@ window.addEventListener("load", function () {
             // clear the fields
             title.value = "";
             description.value = "";
-            selectedLocation = undefined; // TODO: handle location
+            selectedLocation = undefined;
             // clear table
             mediaTableBody = document.getElementById("stop-media");
             mediaTableBody.innerHTML = "";
@@ -307,8 +318,10 @@ window.addEventListener("load", function () {
         // TODO: save the image as well
         var title = document.getElementById("media-title");
         var description = document.getElementById("media-description")
+        var caption = document.getElementById("media-caption")
         var titleValue = title.value;
         var descriptionValue = description.value;
+        var captionValue = caption.value;
         if (!titleValue) { // there must be a title
             $("#media-title").popover({ title: 'Error', content: "Title required"});
             $("#media-title").click();
@@ -318,7 +331,7 @@ window.addEventListener("load", function () {
         } else {
             // save the media item
             var preview = document.getElementById('media-preview');
-            existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src}; // TODO: add image
+            existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
             // make an option in the add media modal's dropdown
             var existingMediaSelect = document.getElementById("existing-media");
             var option = document.createElement('option');
@@ -333,6 +346,7 @@ window.addEventListener("load", function () {
             // clear the fields
             title.value = "";
             description.value = "";
+            caption.value = ""
             document.getElementById("media-item").value = "";
             document.getElementById("media-preview").src = "";
             // navigate back to the stop page
@@ -353,7 +367,26 @@ window.addEventListener("load", function () {
 // trigger by onchange on the html element media-item
 function loadFile(e) {
     var preview = document.getElementById('media-preview');
-    preview.src = URL.createObjectURL(e.target.files[0]);
+    imgURL = URL.createObjectURL(e.target.files[0]);
+    img = new Image();
+    img.src = imgURL
+    // change orientation (simplified)
+    // TODO: show images at a reasonable size proportional
+    // to their original size
+    img.onload = function() {
+        if (img.height > img.width) { // portrait
+            preview.width = "300";
+            preview.height = "350";
+        } else if (img.height < img.width) { // landscape
+            console.log("landscape");
+            preview.width = "400";
+            preview.height = "250";
+        } else { // square
+            preview.width = "300";
+            preview.height = "300";
+        }
+    };
+    preview.src = imgURL;
 }
 
 function updateStopTable(name) {
@@ -367,6 +400,11 @@ function updateStopTable(name) {
     // images and their descriptions in the popup
     // add event listeners when a stop is single clicked to show its
     // location on the map
+    row.addEventListener('click', function () {
+        var stop = existingStops[name];
+        replaceMarkerAndPanTo(new google.maps.LatLng(stop.location, stop.location));
+    });
+
 }
 
 function updateMediaTable(name) {
@@ -428,7 +466,9 @@ function initStopMap() {
         },
         zoom: 13
     });
-
+    if (selectedLocation) { // readd a previous selected location
+        selectedLocation.setMap(map);
+    }
     if (currentLocation) { // use the current location we already have
         currentLocation = new google.maps.Marker({
             position: currentLocation["position"], // users current position
@@ -470,7 +510,7 @@ function replaceMarkerAndPanTo(latLng) {
         position: latLng,
         map: map
     });
-    if (selectedLocation) {
+    if (selectedLocation) { // remove a previous selected location
         selectedLocation.setMap(null);
     }
     map.panTo(latLng);
