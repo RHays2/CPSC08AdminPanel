@@ -102,9 +102,10 @@ window.addEventListener("load", function () {
             document.getElementById("stop-title").value = selectedStop;
             document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
             // add media back to the table
+            addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(existingStops[selectedStop]["media"]); 
             for (var i = 0; i < mediaItems.length; i++) {
-                updateMediaTable(mediaItems[i]);
+                updateMediaTable(mediaItems[i], false);
             }
 
             $('#edit-which-stop').modal('hide');
@@ -355,7 +356,7 @@ window.addEventListener("load", function () {
             $("#existing-media").popover({ title: 'Error', content: "This media was already added to the stop"});
             $("#existing-media").click(); // bring up the popover 
         } else {
-            updateMediaTable(selectedMedia);
+            updateMediaTable(selectedMedia, true);
             // restore default for the select existing media dropdown
             document.getElementById("select-media-default").selected = true; 
             $('#add-media-popup').modal('hide');
@@ -618,7 +619,10 @@ function updateStopTable(name) {
 
 }
 
-function updateMediaTable(name) {
+function updateMediaTable(name, userAdded) {
+    // name is the name of the media item
+    // userAdded=true if the user manually created and confirmed
+    // userAdded=false if updating to edit a stop
     var mediaTable = document.getElementById("stop-media");
     var row = mediaTable.insertRow(-1); // put the new row at the bottom
     row.className = 'clickable-row';
@@ -632,8 +636,10 @@ function updateMediaTable(name) {
     // add media name
     var cell = row.insertCell(1);
     cell.innerHTML = name;
-    addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name]));
-    
+
+    if (userAdded) { 
+        addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name])); 
+    }
     // row.dataset.target = '#media-table-popup'; // set data-target
 
     // pull up the modal when double clicked
