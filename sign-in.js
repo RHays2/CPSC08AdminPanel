@@ -4,43 +4,45 @@
 
 "use strict";
 
-var credentials = {"admin": "password", "me": "12345"}
 
-window.addEventListener("load", function () {
-    // MARK: Sign in page event listeners
-    // TODO: this code also runs on index.html (and fails as it should)
-    //      it should not run on index.html, just the sign in page
-    var passwordField = document.getElementById("password");
-    // Execute a function when the user releases a key on the keyboard
-    passwordField.addEventListener("keyup", function(e) {
-        // Number 13 is the "Enter" key on the keyboard
-        if (event.keyCode === 13) {
-            e.preventDefault();
-            document.getElementById("sign-in").click(); 
-        }
-    });
-    // hide warnings when the text boxes are changed
-    passwordField.addEventListener("input", function() {
-        $("#password").popover('disponse');
-    });
-    usernameField = document.getElementById("#username");
-    usernameField.addEventListener("input", function(){
-        $("#username").popover('dispose');
-    });
-});
+firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      // User is signed in.
+  
+      var user = firebase.auth().currentUser;
+  
+      if(user != null){
 
-function attemptSignIn() {
-    var username = document.getElementById("username").value;
-    var password = document.getElementById("password").value;
-    if (username in credentials) {
-        if (password === credentials[username]) {
-            window.location.href='index.html';
-        } else {
-            $("#password").popover({ title: 'Error', content: "Incorrect Password"});
-            $("#password").click();
-        }
+        window.location.href='index.html';
+      }
+  
     } else {
-        $("#username").popover({ title: 'Error', content: "Unknown Username"});
-        $("#username").click();
+      // No user is signed in.
+
     }
-}
+  });
+  
+  //runs when login button is clicked
+  function login(){
+  
+    //gets email and password field
+    var userEmail = document.getElementById("email_field").value;
+    var userPass = document.getElementById("password_field").value;
+  
+    //checks with firebase authentication service
+    firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+  
+      //already has pre built error alerts through firebase
+      window.alert("Error : " + errorMessage);
+  
+      // ...
+    });
+  
+  }
+  function logout(){
+    firebase.auth().signOut();
+  }
+  
