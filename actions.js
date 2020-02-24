@@ -11,7 +11,7 @@ var editMode = false;
 var startEdit = undefined;
 
 // variables for the map
-var map, currentLocation, infoWindow, selectedLocation;
+var map, detectedLocation, infoWindow, selectedLocation;
 
 // variables for the added media and added tours 
 var addedMedia = {}, addedStops = {};
@@ -22,6 +22,20 @@ var addedMedia = {}, addedStops = {};
 var existingMedia = {}, existingStops = {}, existingTours = {};
 
 window.addEventListener("load", function () {
+    // MARK: tab close event listeners
+    //      remove warnings when a tab is exited
+    $('#nav-pills a[href="#home-page"]').on('hide.bs.tab', function(){
+        removeHomeWarnings();
+    });
+    $('#nav-pills a[href="#tour-page"]').on('hide.bs.tab', function(){
+        removeTourWarnings();
+    });
+    $('#nav-pills a[href="#stop-page"]').on('hide.bs.tab', function(){
+        removeStopWarnings();
+    });
+    $('#nav-pills a[href="#media-page"]').on('hide.bs.tab', function(){
+        removeMediaWarnings();
+    });
 
     // MARK: Home page event listeners 
     // On the home page, the create tour button takes us to the tour page
@@ -68,6 +82,10 @@ window.addEventListener("load", function () {
     $('#edit-existing-tour').on('change', function() {
         $("#edit-existing-tour").popover('dispose');
     }); 
+    // remove the warning if the edit existing tour modal is closed
+    $('#edit-which-tour').on('hide.bs.modal', function() {
+        $("#edit-existing-tour").popover('dispose');
+    }); 
 
     // On the home page, the "edit this stop" button takes us to the stop page
     // Edit mode is set to true
@@ -88,12 +106,11 @@ window.addEventListener("load", function () {
             for (var i = 0; i < mediaItems.length; i++) {
                 updateMediaTable(mediaItems[i]);
             }
-            
-            // TODO: add a marker for the selected location
 
             $('#edit-which-stop').modal('hide');
             $('#nav-pills a[href="#stop-page"]').tab('show');
             initStopMap();
+            replaceMarkerAndPanTo(existingStops[selectedStop]["location"]);
             editMode = true;
             startEdit = "stop";
         }
@@ -101,6 +118,10 @@ window.addEventListener("load", function () {
 
     // Remove the warning next time the edit-existing-stop dropdown box is changed
     $('#edit-existing-stop').on('change', function() {
+        $("#edit-existing-stop").popover('dispose');
+    }); 
+    // remove the warning if the edit existing stop modal is closed
+    $('#edit-which-stop').on('hide.bs.modal', function() {
         $("#edit-existing-stop").popover('dispose');
     }); 
 
@@ -129,6 +150,10 @@ window.addEventListener("load", function () {
 
     // Remove the warning next time the edit-existing-media dropdown box is changed
     $('#edit-existing-media').on('change', function() {
+        $("#edit-existing-media").popover('dispose');
+    }); 
+    // remove the warning if the edit existing stop modal is closed
+    $('#edit-which-media').on('hide.bs.modal', function() {
         $("#edit-existing-media").popover('dispose');
     }); 
 
@@ -210,6 +235,15 @@ window.addEventListener("load", function () {
         }
     });
 
+    // Remove the warning next time the existing-stops dropdown box is changed
+    $('#existing-stops').on('change', function() {
+        $("#existing-stops").popover('dispose');
+    }); 
+    // Remove the warning next time when existing-media modal is closed
+    $('#add-stop-popup').on('hide.bs.modal', function() {
+        $("#existing-stops").popover('dispose');
+    }); 
+
     // remove a stop item from the table
     $('#confirm-remove-stop').click(function() {
         var tableBody = document.getElementById("tour-stops");
@@ -219,6 +253,7 @@ window.addEventListener("load", function () {
         delete addedStops[name];
     });
 
+    // move an item up in the table
     $('#stop-up').click(function(){
         moveTableRowUp("tour-stops") 
      });
@@ -235,6 +270,7 @@ window.addEventListener("load", function () {
     // takes us to the media page
     $('#create-media').click(function(e){
         e.preventDefault();
+        // clearMediaFields(); // TODO: is this expected behavior? 
         $('#nav-pills a[href="#media-page"]').tab('show');
     });
 
@@ -330,6 +366,10 @@ window.addEventListener("load", function () {
     $('#existing-media').on('change', function() {
         $("#existing-media").popover('dispose');
     }); 
+    // Remove the warning next time when existing-media modal is closed
+    $('#add-media-popup').on('hide.bs.modal', function() {
+        $("#existing-media").popover('dispose');
+    }); 
 
     // remove a media item from the table
     $('#confirm-remove-media').click(function() {
@@ -396,7 +436,7 @@ window.addEventListener("load", function () {
 
                 // navigate back to the stop page
                 $('#nav-pills a[href="#stop-page"]').tab('show');
-                initStopMap()
+                initStopMap();
                 $('#add-media-popup').modal('show'); // bring back up the modal
                 $("#existing-media").popover('dispose'); // hide the warning about repeat media
                                                     // if it exists
@@ -409,6 +449,34 @@ window.addEventListener("load", function () {
         $("#media-title").popover('dispose');
     }); 
 });
+
+
+// MARK: functions to remove warnings 
+// when the user leaves that tab
+
+function removeHomeWarnings() {
+    $("#edit-existing-tour").popover('dispose');
+    $("#edit-existing-stop").popover('dispose');
+    $("#edit-existing-media").popover('dispose');
+}
+
+function removeTourWarnings() {
+    $("#existing-stops").popover('dispose');
+    $("#tour-title").popover('dispose');
+}
+
+function removeStopWarnings() {
+    $("#existing-media").popover('dispose');
+    $("#stop-title").popover('dispose');
+    $("#stop-map").popover('dispose');
+
+}
+
+function removeMediaWarnings() {
+    $("#media-title").popover('dispose');
+}
+
+// MARK: functions to sort table items
 
 function moveTableRowDown(tableName) {
     table = document.getElementById(tableName);
@@ -455,7 +523,7 @@ function moveTableRowUp(tableName) {
 }
 
 
-
+// MARK: functions to clear input fields 
 
 function clearMediaFields() {
     var title = document.getElementById("media-title");
@@ -517,6 +585,9 @@ function loadFile(e) {
     };
     preview.src = imgURL;
 }
+
+// MARK: functions to update the tables when 
+//       an item is added
 
 function updateStopTable(name) {
     var stopTable = document.getElementById("tour-stops");
@@ -612,6 +683,8 @@ function updateMediaTable(name) {
     });
 }
 
+// MARK: map functions
+
 function initTourMap() {
     map = new google.maps.Map(document.getElementById("tour-map"), {
         center: {
@@ -621,15 +694,15 @@ function initTourMap() {
         zoom: 13
     });
     
-    if (currentLocation) { // use the current location we already have
-        currentLocation = new google.maps.Marker({
-            position: currentLocation["position"], // users current position
+    if (detectedLocation) { // use the current location we already have
+        detectedLocation = new google.maps.Marker({
+            position: detectedLocation["position"], // users current position
             map: map,
             icon: { // use a blue marker for current location 
                 url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
             }
         });
-        map.setCenter(currentLocation["position"]);
+        map.setCenter(detectedLocation["position"]);
     } else if (navigator.geolocation) { // Try HTML5 geolocation.
         navigator.geolocation.getCurrentPosition(function (position) {
             var pos = {
@@ -637,7 +710,7 @@ function initTourMap() {
                 lng: position.coords.longitude
             };
             map.setCenter(pos)
-            currentLocation = new google.maps.Marker({
+            detectedLocation = new google.maps.Marker({
                 position: pos, // users current position
                 map: map,
                 icon: { // use a blue marker for current location 
@@ -663,24 +736,27 @@ function initStopMap() {
     });
     if (selectedLocation) { // readd a previous selected location
         selectedLocation.setMap(map);
+        map.panTo(selectedLocation.getPosition()); // TODO: this line doesn't work??
     }
-    if (currentLocation) { // use the current location we already have
-        currentLocation = new google.maps.Marker({
-            position: currentLocation["position"], // users current position
+    if (detectedLocation) { // use the current location we already have
+        console.log("using current location")
+        detectedLocation = new google.maps.Marker({
+            position: detectedLocation["position"], // users current position
             map: map,
             icon: { // use a blue marker for current location 
                 url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
             }
         });
-        map.setCenter(currentLocation["position"]);
+        map.setCenter(detectedLocation["position"]);
     } else if (navigator.geolocation) { // Try HTML5 geolocation.
+        console.log("using html5 geolocation")
         navigator.geolocation.getCurrentPosition(function (position) {
             var pos = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
             };
             map.setCenter(pos);
-            currentLocation = new google.maps.Marker({
+            detectedLocation = new google.maps.Marker({
                 position: pos, // users current position
                 map: map,
                 icon: { // use a blue marker for current location 
@@ -691,14 +767,19 @@ function initStopMap() {
             handleLocationError(true, infoWindow, map.getCenter());
         });
     } else {
+        console.log("something went wrong")
         // Browser doesn't support Geolocation
         handleLocationError(false, infoWindow, map.getCenter());
     }
+    
+
     // on the stop map, place a marker where the user clicks
     map.addListener('click', function (e) {
         replaceMarkerAndPanTo(e.latLng);
+        $("#stop-map").popover('dispose');
     });
 }
+
 
 function replaceMarkerAndPanTo(latLng) {
     var marker = new google.maps.Marker({
