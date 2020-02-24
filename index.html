@@ -13,10 +13,23 @@ Admin Panel Web App -->
     <!--bootstrap
         https://getbootstrap.com/docs/4.4/getting-started/download/
     -->
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script 
+        src="https://code.jquery.com/jquery-3.4.1.slim.min.js" 
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" 
+        crossorigin="anonymous"></script>
+    <script 
+        src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" 
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" 
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" 
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" 
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" 
+        crossorigin="anonymous">
+    <script 
+        src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" 
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" 
+        crossorigin="anonymous"></script>
+
 
     <!--extra fonts, icons-->
     <script src="https://kit.fontawesome.com/99703f365f.js" crossorigin="anonymous"></script>
@@ -63,7 +76,7 @@ Admin Panel Web App -->
                         To create a stop, you must add a title, location and media. Media is the pictures and 
                         videos you want associated with that stop.
                         To create a media item, you must select the image or video from your computer, then 
-                        give it a title and description.  
+                        give it a title and caption.  
                     </p>
                 </div>
                 <div class="row justify-content-center">
@@ -185,8 +198,16 @@ Admin Panel Web App -->
                             <textarea rows="5" cols="50" name="tour-description" class="description" id="tour-description"></textarea>
                         </div>
                     </div>
+                    <div class="col-lg-1">
+                        <div class="row mt-5">
+                            <button class="btn btn-lg btn-info" id="stop-up"><i class="fas fa-arrow-up"></i></button>
+                        </div>
+                        <div class="row mt-3">
+                            <button class="btn btn-lg btn-info" id="stop-down"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </div>
                     <!--The right column-->
-                    <div class="col-lg-6">
+                    <div class="col-lg-5">
                         <div class="row">
                             <!--
                             A table of stops that have been added to the tour
@@ -197,7 +218,7 @@ Admin Panel Web App -->
                             The remove-stop button removes the selected item from the table 
                             TODO: The table will be numbered, and the user can drag and drop to sort 
                             -->
-                            <div class="card p-2 m-1 bg-dark w-100">
+                            <div class="card p-2 m-1 bg-dark w-100 table-div">
                                 <table id="stop-table" class="table table-hover table-primary w-100">
                                     <thead>
                                         <tr>
@@ -315,8 +336,16 @@ Admin Panel Web App -->
                             <textarea rows="5" cols="50" name="stop-description" class="description" id="stop-description"></textarea>
                         </div>
                     </div>
+                    <div class="col-lg-1">
+                        <div class="row mt-5">
+                            <button class="btn btn-lg btn-info" id="media-up"><i class="fas fa-arrow-up"></i></button>
+                        </div>
+                        <div class="row mt-3">
+                            <button class="btn btn-lg btn-info" id="media-down"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </div>
                     <!--The right column-->
-                    <div class="col-lg-6">
+                    <div class="col-lg-5">
                         <div class="row">
                             <!--
                             A table of media that have been added to the stp
@@ -326,7 +355,7 @@ Admin Panel Web App -->
                             displayed on the map (class="clickable-row")
                             The remove-stop button removes the selected item from the table
                             -->
-                            <div class="card p-2 m-1 bg-dark w-100">
+                            <div class="card p-2 m-1 bg-dark w-100 table-div">
                                 <table id="media-table" class="table table-hover table-primary w-100">
                                     <thead>
                                         <tr>
@@ -342,6 +371,36 @@ Admin Panel Web App -->
                             </div>
                         </div>
                             
+                        <!--modal for changing the caption on a media item for a particular stop-->
+                        <div class="modal fade" id="media-table-popup"  tabindex="-1" role="dialog" aria-labelledby="media-table-modal-title" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content"> 
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="media-table-modal-title"></h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row justify-content-center">
+                                            <label class="caption" for="media-pop-up-caption">Media Caption:</label>
+                                        </div>
+                                        <div class="row justify-content-center">
+                                            <textarea rows="3" cols="50" name="media-pop-up-caption" class="caption" id="media-pop-up-caption"></textarea>
+                                        </div>
+                                        <div class="row justify-content-center mt-1">
+                                            <img id="media-pop-up-preview" src="" height="250px" width="400px">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-dark" id="cancel-edit-caption" type="button" data-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-primary" id="confirm-edit-caption" type="button" data-dismiss="modal">Confirm</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div class="row">
                             <!--
                                 Button and popup (modal) removing a stop
@@ -428,12 +487,13 @@ Admin Panel Web App -->
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+                        <!-- The original design had a description, which we are texting removing-->
+                        <!--<div class="row">
                             <label class="description" for="media-description">Media Description:</label>
                         </div>
                         <div class="row">
                             <textarea rows="7" cols="50" name="media-description" class="description" id="media-description"></textarea>
-                        </div>
+                        </div>-->
                         <div class="row">
                             <label class="caption" for="media-caption">Media Caption:</label>
                         </div>
