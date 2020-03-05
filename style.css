@@ -32,4 +32,9 @@
     width: 100%;
 }
 
-
+/* makes the table a fixed size and scrollable after 
+    but it is grey and ugly */
+/* .table-div {
+    height: 350px;
+    overflow-y: auto;
+} */

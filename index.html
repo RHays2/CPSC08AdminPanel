@@ -10,16 +10,6 @@ Admin Panel Web App -->
 
     <title>Tour Admin Panel</title>
 
-<!-- The core Firebase JS SDK is always required and must be listed first -->
-<script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-app.js"></script>
-
-<!-- TODO: Add SDKs for Firebase products that you want to use
-     https://firebase.google.com/docs/web/setup#available-libraries -->
-<script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-analytics.js"></script>
-<script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
-<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
-
-
     <!--bootstrap
         https://getbootstrap.com/docs/4.4/getting-started/download/
     -->
@@ -73,7 +63,7 @@ Admin Panel Web App -->
                         To create a stop, you must add a title, location and media. Media is the pictures and 
                         videos you want associated with that stop.
                         To create a media item, you must select the image or video from your computer, then 
-                        give it a title and description.  
+                        give it a title and caption.  
                     </p>
                 </div>
                 <div class="row justify-content-center">
@@ -195,8 +185,16 @@ Admin Panel Web App -->
                             <textarea rows="5" cols="50" name="tour-description" class="description" id="tour-description"></textarea>
                         </div>
                     </div>
+                    <div class="col-lg-1">
+                        <div class="row mt-5">
+                            <button class="btn btn-lg btn-info" id="stop-up"><i class="fas fa-arrow-up"></i></button>
+                        </div>
+                        <div class="row mt-3">
+                            <button class="btn btn-lg btn-info" id="stop-down"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </div>
                     <!--The right column-->
-                    <div class="col-lg-6">
+                    <div class="col-lg-5">
                         <div class="row">
                             <!--
                             A table of stops that have been added to the tour
@@ -207,7 +205,7 @@ Admin Panel Web App -->
                             The remove-stop button removes the selected item from the table 
                             TODO: The table will be numbered, and the user can drag and drop to sort 
                             -->
-                            <div class="card p-2 m-1 bg-dark w-100">
+                            <div class="card p-2 m-1 bg-dark w-100 table-div">
                                 <table id="stop-table" class="table table-hover table-primary w-100">
                                     <thead>
                                         <tr>
@@ -325,8 +323,16 @@ Admin Panel Web App -->
                             <textarea rows="5" cols="50" name="stop-description" class="description" id="stop-description"></textarea>
                         </div>
                     </div>
+                    <div class="col-lg-1">
+                        <div class="row mt-5">
+                            <button class="btn btn-lg btn-info" id="media-up"><i class="fas fa-arrow-up"></i></button>
+                        </div>
+                        <div class="row mt-3">
+                            <button class="btn btn-lg btn-info" id="media-down"><i class="fas fa-arrow-down"></i></button>
+                        </div>
+                    </div>
                     <!--The right column-->
-                    <div class="col-lg-6">
+                    <div class="col-lg-5">
                         <div class="row">
                             <!--
                             A table of media that have been added to the stp
@@ -336,7 +342,7 @@ Admin Panel Web App -->
                             displayed on the map (class="clickable-row")
                             The remove-stop button removes the selected item from the table
                             -->
-                            <div class="card p-2 m-1 bg-dark w-100">
+                            <div class="card p-2 m-1 bg-dark w-100 table-div">
                                 <table id="media-table" class="table table-hover table-primary w-100">
                                     <thead>
                                         <tr>
@@ -352,6 +358,36 @@ Admin Panel Web App -->
                             </div>
                         </div>
                             
+                        <!--modal for changing the caption on a media item for a particular stop-->
+                        <div class="modal fade" id="media-table-popup"  tabindex="-1" role="dialog" aria-labelledby="media-table-modal-title" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content"> 
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="media-table-modal-title"></h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row justify-content-center">
+                                            <label class="caption" for="media-pop-up-caption">Media Caption:</label>
+                                        </div>
+                                        <div class="row justify-content-center">
+                                            <textarea rows="3" cols="50" name="media-pop-up-caption" class="caption" id="media-pop-up-caption"></textarea>
+                                        </div>
+                                        <div class="row justify-content-center mt-1">
+                                            <img id="media-pop-up-preview" src="" height="250px" width="400px">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-dark" id="cancel-edit-caption" type="button" data-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-primary" id="confirm-edit-caption" type="button" data-dismiss="modal">Confirm</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div class="row">
                             <!--
                                 Button and popup (modal) removing a stop
@@ -438,12 +474,13 @@ Admin Panel Web App -->
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
+                        <!-- The original design had a description, which we are texting removing-->
+                        <!--<div class="row">
                             <label class="description" for="media-description">Media Description:</label>
                         </div>
                         <div class="row">
                             <textarea rows="7" cols="50" name="media-description" class="description" id="media-description"></textarea>
-                        </div>
+                        </div>-->
                         <div class="row">
                             <label class="caption" for="media-caption">Media Caption:</label>
                         </div>
@@ -466,12 +503,24 @@ Admin Panel Web App -->
             </div>
     </div>
 
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+        https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-analytics.js"></script>
+    <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-database.js"></script>
+
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+
     <!--google maps apis -->
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUBdf6vAxGfo1W9vUn222t2KecWuIbAJg">
     </script>
 
-<script src="login.js"></script>
-<script src="firebase.js"></script>
+<!--<script src="login.js"></script>
+<script src="firebase.js"></script>-->
 </body>
 </html>
