@@ -22,6 +22,22 @@ var addedMedia = {}, addedStops = {};
 var existingMedia = {}, existingStops = {}, existingTours = {};
 
 window.addEventListener("load", function () {
+    // Initialize firebase 
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfS00TUVcfmZxEBGH6J9dK6JpxpdEbO4A",
+        authDomain: "gonzagawalkingtour.firebaseapp.com",
+        databaseURL: "https://gonzagawalkingtour.firebaseio.com",
+        projectId: "gonzagawalkingtour",
+        storageBucket: "gonzagawalkingtour.appspot.com",
+        messagingSenderId: "239906026383",
+        appId: "1:239906026383:web:12366df5d3d970d7c6d1fa",
+        measurementId: "G-QZYFQXWSGT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+
+
     // MARK: tab close event listeners
     //      remove warnings when a tab is exited
     $('#nav-pills a[href="#home-page"]').on('hide.bs.tab', function(){
@@ -416,13 +432,24 @@ window.addEventListener("load", function () {
             var preview = document.getElementById('media-preview');
             // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
             existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue};
-            
+
             clearMediaFields();
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = true;
                 startEdit = undefined;
-            } else { // we are created a new item
+            } else { // we are creating a new item
+                // upload media to database 
+                // Create a root reference
+                var storageRef = firebase.storage().ref();
+                var fileName = 'images/' + titleValue + '.jpg'; // TODO: later not only jpg
+                var spaceRef = storageRef.child(fileName);
+                var file = document.getElementById('media-item').files[0];
+                spaceRef.put(file).then(function(snapshot) {
+                    console.log('Uploaded!');
+                });
+                // TODO: edit mode
+
                 // make an option in the add media modal's dropdown
                 var existingMediaSelect = document.getElementById("existing-media");
                 var option = document.createElement('option');
@@ -639,6 +666,7 @@ function updateMediaTable(name, userAdded) {
 
     if (userAdded) { 
         addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name])); 
+        addedMedia[name]["order"] = numRows;  
     }
     // row.dataset.target = '#media-table-popup'; // set data-target
 
