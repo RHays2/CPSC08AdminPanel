@@ -88,6 +88,8 @@ window.addEventListener("load", function () {
 
             $('#edit-which-tour').modal('hide');
             $('#nav-pills a[href="#tour-page"]').tab('show');
+            // show delete tour button
+            document.getElementById('delete-tour').style.visibility = "visible";
             editMode = true;
             startEdit = "tour";
             initTourMap();
@@ -216,18 +218,27 @@ window.addEventListener("load", function () {
             if (editMode) {
                 editMode = false;
                 startEdit = undefined;
+                document.getElementById("delete-tour").style.visibility = "hidden";
             } else {
                 // make an option in the edit tour modal's dropdown
                 var editTourSelect = document.getElementById("edit-existing-tour");
                 var option = document.createElement('option');
                 option.text = option.value = titleValue;
                 editTourSelect.add(option);
+
+                // TODO: upload entire tour
+                // var databaseRef = firebase.database();
+                // var toursRef = databaseRef.child("tours");
+                // toursRef.push({
+
+                // }); 
             }
             clearTourFields();
             
             // navigate back to the home page
             $('#nav-pills a[href="#home-page"]').tab('show');
         }
+
     });
 
     // clicking a row in the stop table highlights it
@@ -273,13 +284,28 @@ window.addEventListener("load", function () {
     // move an item up in the table
     $('#stop-up').click(function(){
         moveTableRowUp("tour-stops") 
-     });
+    });
  
-     // move an item down in the table
-     $('#stop-down').click(function(){
-         moveTableRowDown("tour-stops") 
-     });
+    // move an item down in the table
+    $('#stop-down').click(function(){
+        moveTableRowDown("tour-stops") 
+    });
 
+    $('#confirm-delete-stop').click(function() {
+        // TODO: check if checkbox is clicked, close modal if so
+        var checkbox = document.getElementById("checkbox-delete-stop");
+        var checked = checkbox.checked;
+        if (checked) {
+            // TODO: delete tour from database
+
+            // clear fields, uncheck checkbox, hide modal, hide delete button, return to home
+            clearTourFields();
+            checkbox.checked = false;
+            $('#delete-tour-popup').modal('hide');
+            document.getElementById("delete-tour").style.visibility = "hidden";
+            $('#nav-pills a[href="#home-page"]').tab('show');
+        } 
+    });
 
     // MARK: stop page event listeners
 
@@ -442,13 +468,15 @@ window.addEventListener("load", function () {
                 // upload media to database 
                 // Create a root reference
                 var storageRef = firebase.storage().ref();
-                var fileName = 'images/' + titleValue + '.jpg'; // TODO: later not only jpg
-                var spaceRef = storageRef.child(fileName);
+                var fileName = titleValue + '.jpg'; // TODO: later not only jpg
+                var fileLoc = 'images/' + fileName; 
+                // create a child for the new file
+                var spaceRef = storageRef.child(fileLoc);
                 var file = document.getElementById('media-item').files[0];
                 spaceRef.put(file).then(function(snapshot) {
                     console.log('Uploaded!');
                 });
-                // TODO: edit mode
+                
 
                 // make an option in the add media modal's dropdown
                 var existingMediaSelect = document.getElementById("existing-media");
