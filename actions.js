@@ -438,7 +438,7 @@ window.addEventListener("load", function () {
     // On the media page, the "Upload Media" button
     $('#upload-media').click(function(e) {
         e.preventDefault();
-        // TODO: save the image as well
+        
         var title = document.getElementById("media-title");
         // var description = document.getElementById("media-description");
         var caption = document.getElementById("media-caption");
@@ -455,11 +455,11 @@ window.addEventListener("load", function () {
             $("#media-title").click();
         } else {
             // save the media item
+            console.log("save the media");
             var preview = document.getElementById('media-preview');
             // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
             existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue};
-
-            clearMediaFields();
+            console.log(existingMedia);
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = true;
@@ -473,30 +473,32 @@ window.addEventListener("load", function () {
                 // create a child for the new file
                 var spaceRef = storageRef.child(fileLoc);
                 var file = document.getElementById('media-item').files[0];
+                
+                console.log(file)
                 spaceRef.put(file).then(function(snapshot) {
                     console.log('Uploaded!');
-                });
-                
+                });  
 
-                // make an option in the add media modal's dropdown
-                var existingMediaSelect = document.getElementById("existing-media");
-                var option = document.createElement('option');
-                option.text = option.value = titleValue;
-                option.selected = true; // the newly created media should be selected
-                existingMediaSelect.add(option);
-                // make an option in the edit media modal's dropdown
-                var editMediaSelect = document.getElementById("edit-existing-media");
-                var option = document.createElement('option');
-                option.text = option.value = titleValue;
-                editMediaSelect.add(option)
-
-                // navigate back to the stop page
-                $('#nav-pills a[href="#stop-page"]').tab('show');
-                initStopMap();
-                $('#add-media-popup').modal('show'); // bring back up the modal
-                $("#existing-media").popover('dispose'); // hide the warning about repeat media
-                                                    // if it exists
+                 // make an option in the add media modal's dropdown
+                 var existingMediaSelect = document.getElementById("existing-media");
+                 var option = document.createElement('option');
+                 option.text = option.value = titleValue;
+                 option.selected = true; // the newly created media should be selected
+                 existingMediaSelect.add(option);
+                 // make an option in the edit media modal's dropdown
+                 var editMediaSelect = document.getElementById("edit-existing-media");
+                 var option = document.createElement('option');
+                 option.text = option.value = titleValue;
+                 editMediaSelect.add(option)
+ 
+                 // navigate back to the stop page
+                 $('#nav-pills a[href="#stop-page"]').tab('show');
+                 initStopMap();
+                 $('#add-media-popup').modal('show'); // bring back up the modal
+                 $("#existing-media").popover('dispose'); // hide the warning about repeat media
+                                                     // if it exists
             }
+            clearMediaFields();
         }
     });
 
