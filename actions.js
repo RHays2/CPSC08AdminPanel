@@ -93,8 +93,6 @@ window.addEventListener("load", function () {
                 }
             }
 
-
-
             $('#edit-which-tour').modal('hide');
             $('#nav-pills a[href="#tour-page"]').tab('show');
             // show delete tour button
@@ -204,7 +202,6 @@ window.addEventListener("load", function () {
     // home page
     $('#save-tour').click(function(e) {
         e.preventDefault();
-        var previewImageTitle = document.getElementById("media-title").value;
         var title = document.getElementById("tour-title");
         var description = document.getElementById("tour-description")
         var titleValue = title.value;
@@ -240,6 +237,25 @@ window.addEventListener("load", function () {
                 option.text = option.value = titleValue;
                 editTourSelect.add(option);
 
+                // TODO: require image
+                var file = document.getElementById('tour-preview-image').files[0];
+                if (file) { // if there is an image, upload it
+                    var name = file.name;
+                    var lastDot = name.lastIndexOf('.');
+                    var extension = name.substring(lastDot + 1);
+
+                    // Create a root reference
+                    var storageRef = firebase.storage().ref();
+                    var fileName = titleValue + "." + extension;
+                    console.log(fileName);
+                    var fileLoc = 'images/' + fileName;
+                    // create a child for the new file
+                    var spaceRef = storageRef.child(fileLoc);
+                    spaceRef.put(file).then(function(snapshot) {
+                        console.log('Uploaded!');
+                    });
+                }
+
                 // TODO: upload entire tour
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
@@ -250,8 +266,9 @@ window.addEventListener("load", function () {
                   description: descriptionValue,
                   length: numRows,
                   name: titleValue,
-                  preview_image: previewImageTitle + '.jpg'
+                  preview_image: fileName
                 })
+
 
             }
             clearTourFields();

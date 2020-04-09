@@ -179,6 +179,14 @@ Admin Panel Web App -->
                             </div>
                         </div>
                         <div class="row">
+                            <div class="col-lg-4">
+                                <label for="tour-preview-image">Preview Image:</label>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="file" name="tour-preview-image" accept="image/*,video/*" id="tour-preview-image"> <!--  onchange="loadFile(event)"> <!-- TODO: separate onchange function with modal preview -->
+                            </div>
+                        </div>
+                        <div class="row">
                             <label class="description" for="tour-description">Tour Description:</label>
                         </div>
                         <div class="row">
