@@ -80,10 +80,20 @@ window.addEventListener("load", function () {
             document.getElementById("admin-only").value = existingTours[selectedTour]["visibility"];
 
             // add stops back to the table
-            var stops = Object.keys(existingTours[selectedTour]["stops"]);
-            for (var i = 0; i < stops.length; i++) {
-                updateStopTable(stops[i]);
+            var existingStops = existingTours[selectedTour]["stops"]
+            var stops = Object.keys(existingStops);
+            // for (var i = 0; i < stops.length; i++) {
+            //     updateStopTable(stops[i]);
+            // }
+            for (var i = 1; i <= stops.length; i++) {
+                for (var j = 0; j < stops.length; j++) {
+                    if (existingStops[stops[j]]["stop_order"]===i) { // add items in order 1+
+                        updateStopTable(stops[j]);
+                    }
+                }
             }
+
+
 
             $('#edit-which-tour').modal('hide');
             $('#nav-pills a[href="#tour-page"]').tab('show');
