@@ -83,7 +83,6 @@ window.addEventListener("load", function () {
             var stops = Object.keys(existingTours[selectedTour]["stops"]);
             for (var i = 0; i < stops.length; i++) {
                 updateStopTable(stops[i]);
-                addedStops[stops[i]] = existingStops[stops[i]];
             }
 
             $('#edit-which-tour').modal('hide');
@@ -118,12 +117,17 @@ window.addEventListener("load", function () {
         } else {
             clearStopFields();
             document.getElementById("stop-title").value = selectedStop;
+            // here max  reenter saved description
             document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
             // add media back to the table
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
-            var mediaItems = Object.keys(existingStops[selectedStop]["media"]);
-            for (var i = 0; i < mediaItems.length; i++) {
-                updateMediaTable(mediaItems[i], false);
+            var mediaItems = Object.keys(addedMedia);
+            for (var i = 1; i <= mediaItems.length; i++) {
+                for (var j = 0; j < mediaItems.length; j++) {
+                    if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
+                        updateMediaTable(mediaItems[j], false);
+                    }
+                }
             }
 
             $('#edit-which-stop').modal('hide');
@@ -190,7 +194,7 @@ window.addEventListener("load", function () {
     // home page
     $('#save-tour').click(function(e) {
         e.preventDefault();
-
+        var previewImageTitle = document.getElementById("media-title").value;
         var title = document.getElementById("tour-title");
         var description = document.getElementById("tour-description")
         var titleValue = title.value;
@@ -227,11 +231,18 @@ window.addEventListener("load", function () {
                 editTourSelect.add(option);
 
                 // TODO: upload entire tour
-                // var databaseRef = firebase.database();
-                // var toursRef = databaseRef.child("tours");
-                // toursRef.push({
+                var databaseRef = firebase.database().ref();
+                var toursRef = databaseRef.child("tours");
+                /*toursRef.push({
 
-                // });
+                });*/
+                var id = toursRef.push({
+                  description: descriptionValue,
+                  length: numRows,
+                  name: titleValue,
+                  preview_image: previewImageTitle + '.jpg'
+                })
+
             }
             clearTourFields();
 
@@ -255,7 +266,6 @@ window.addEventListener("load", function () {
             $("#existing-stops").click(); // bring up the popover
         } else {
             updateStopTable(selectedStop);
-            addedStops[selectedStop] = existingStops[selectedStop];
             // restore default for the select existing media dropdown
             document.getElementById("select-stop-default").selected = true;
             $('#add-stop-popup').modal('hide');
@@ -316,13 +326,15 @@ window.addEventListener("load", function () {
         $('#nav-pills a[href="#media-page"]').tab('show');
     });
 
+
+
     // On the stop page, the "Save stop" button returns us
     // to the tour page
     $('#save-stop').click(function(e) {
         e.preventDefault();
 
         var title = document.getElementById("stop-title");
-        var description = document.getElementById("stop-description");
+        var description = document.getElementById("stop-description"); // here max - preparing to save
         var titleValue = title.value;
         var descriptionValue = description.value;
 
@@ -342,7 +354,7 @@ window.addEventListener("load", function () {
             $("#stop-map").click();
         } else {
             // save the stop
-            existingStops[titleValue] = {
+            existingStops[titleValue] = { // here max  creating the object inc the description
                 "description": descriptionValue,
                 "media": addedMedia,
                 "location": {
@@ -454,30 +466,32 @@ window.addEventListener("load", function () {
             $("#media-title").click();
         } else {
             // save the media item
-            console.log("save the media");
             var preview = document.getElementById('media-preview');
             // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
             existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue};
-            console.log(existingMedia);
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = true;
                 startEdit = undefined;
             } else { // we are creating a new item
-                // upload media to database
-                // Create a root reference
-                var storageRef = firebase.storage().ref();
-                var fileName = titleValue + '.jpg'; // TODO: later not only jpg
-                var fileLoc = 'images/' + fileName;
-                // create a child for the new file
-                var spaceRef = storageRef.child(fileLoc);
                 var file = document.getElementById('media-item').files[0];
+                if (file) { // if there is an image, upload it
 
-                console.log(file)
-                spaceRef.put(file).then(function(snapshot) {
-                    console.log('Uploaded!');
-                });
+                    var name = file.name;
+                    var lastDot = name.lastIndexOf('.');
+                    var extension = name.substring(lastDot + 1);
 
+                    // Create a root reference
+                    var storageRef = firebase.storage().ref();
+                    var fileName = titleValue + "." + extension;
+                    console.log(fileName);
+                    var fileLoc = 'images/' + fileName;
+                    // create a child for the new file
+                    var spaceRef = storageRef.child(fileLoc);
+                    spaceRef.put(file).then(function(snapshot) {
+                        console.log('Uploaded!');
+                    });
+                }
                  // make an option in the add media modal's dropdown
                  var existingMediaSelect = document.getElementById("existing-media");
                  var option = document.createElement('option');
@@ -553,6 +567,15 @@ function moveTableRowDown(tableName) {
         selectedRow.cells[1].innerHTML = rowBelow.cells[1].innerHTML;
         rowBelow.cells[1].innerHTML = name;
 
+        // change order attributes in data model
+        if (tableName === "stop-media") {
+            addedMedia[name]["media_order"] = selectedRowIndex + 1;
+            addedMedia[selectedRow.cells[1].innerHTML]["media_order"] = selectedRowIndex;
+        } else if (tableName === "tour-stops") {
+            addedStops[name]["stop_order"] = selectedRowIndex + 1;
+            addedStops[selectedRow.cells[1].innerHTML]["stop_order"] = selectedRowIndex;
+        }
+
         // select the swapped row
         $(rowBelow).addClass('bg-info').siblings().removeClass('bg-info');
     }
@@ -573,6 +596,14 @@ function moveTableRowUp(tableName) {
         // swap the two rows
         selectedRow.cells[1].innerHTML = rowAbove.cells[1].innerHTML;
         rowAbove.cells[1].innerHTML = name;
+
+        if (tableName === "stop-media") {
+            addedMedia[name]["media_order"] = selectedRowIndex - 1;
+            addedMedia[selectedRow.cells[1].innerHTML]["media_order"] = selectedRowIndex;
+        } else if (tableName === "tour-stops") {
+            addedStops[name]["stop_order"] = selectedRowIndex - 1;
+            addedStops[selectedRow.cells[1].innerHTML]["stop_order"] = selectedRowIndex;
+        }
 
         // select the swapped row
         $(rowAbove).addClass('bg-info').siblings().removeClass('bg-info');
@@ -596,7 +627,7 @@ function clearMediaFields() {
 
 function clearStopFields() {
     var title = document.getElementById("stop-title");
-    var description = document.getElementById("stop-description")
+    var description = document.getElementById("stop-description") // here max
     // clear the fields
     title.value = "";
     description.value = "";
@@ -645,7 +676,6 @@ function loadFile(e) {
 
 // MARK: functions to update the tables when
 //       an item is added
-
 function updateStopTable(name) {
     var stopTable = document.getElementById("tour-stops");
     var row = stopTable.insertRow(-1); // put the new row at the bottom
@@ -656,6 +686,10 @@ function updateStopTable(name) {
     var cellRowNumber = row.insertCell(0);
     var numberImageFile = "stopNumberImages/bwr" + numRows + ".jpg";
     cellRowNumber.innerHTML = "<img src=" + numberImageFile + " >"
+
+    // add to added media, add stop_order
+    addedStops[name] = existingStops[name];
+    addedStops[name]["stop_order"] = numRows;
 
     // add media name
     var cell = row.insertCell(1);
@@ -672,6 +706,8 @@ function updateStopTable(name) {
         var stop = existingStops[name];
         replaceMarkerAndPanTo(new google.maps.LatLng(stop.location, stop.location));
     });
+
+
 
 }
 
@@ -695,8 +731,8 @@ function updateMediaTable(name, userAdded) {
 
     if (userAdded) {
         addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name]));
-        addedMedia[name]["order"] = numRows;
     }
+    addedMedia[name]["media_order"] = numRows;
     // row.dataset.target = '#media-table-popup'; // set data-target
 
     // pull up the modal when double clicked
