@@ -29,7 +29,7 @@ Admin Panel Web App -->
 <body>
     <!--
         Navigation tabs ("pills") at the top of the page
-        Currently the user can navigate by clicking these or by clicking 
+        Currently the user can navigate by clicking these or by clicking
         certain buttons. Eventually we want to either
             not let them navigate with these
             only let them navigate back with these
@@ -59,11 +59,11 @@ Admin Panel Web App -->
                     <p id="instructions">
                         To create a tour, you must add a title and stops. You may also give a description.
                         Tours are by default admin-only but can also be set available for all-users.
-                        Tours must have at least one stop and may have up to 25 stops. 
-                        To create a stop, you must add a title, location and media. Media is the pictures and 
+                        Tours must have at least one stop and may have up to 25 stops.
+                        To create a stop, you must add a title, location and media. Media is the pictures and
                         videos you want associated with that stop.
-                        To create a media item, you must select the image or video from your computer, then 
-                        give it a title and caption.  
+                        To create a media item, you must select the image or video from your computer, then
+                        give it a title and caption.
                     </p>
                 </div>
                 <div class="row justify-content-center">
@@ -80,7 +80,7 @@ Admin Panel Web App -->
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-tour" id="edit-tour" type="button">Edit existing tour</button>
                         <div class="modal fade" id="edit-which-tour"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content"> 
+                                <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="modal-choose-tour">Choose a tour to edit</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -109,7 +109,7 @@ Admin Panel Web App -->
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-stop" id="edit-stop" type="button">Edit existing stop</button>
                         <div class="modal fade" id="edit-which-stop"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-tour" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content"> 
+                                <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="modal-choose-stop">Choose a stop to edit</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -135,7 +135,7 @@ Admin Panel Web App -->
                         <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#edit-which-media" id="edit-media" type="button">Edit existing media</button>
                         <div class="modal fade" id="edit-which-media"  tabindex="-1" role="dialog" aria-labelledby="modal-choose-media" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content"> 
+                                <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="modal-choose-media">Choose a media item to edit</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -179,6 +179,14 @@ Admin Panel Web App -->
                             </div>
                         </div>
                         <div class="row">
+                            <div class="col-lg-4">
+                                <label for="tour-preview-image">Preview Image:</label>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="file" name="tour-preview-image" accept="image/*,video/*" id="tour-preview-image"> <!--  onchange="loadFile(event)"> <!-- TODO: separate onchange function with modal preview -->
+                            </div>
+                        </div>
+                        <div class="row">
                             <label class="description" for="tour-description">Tour Description:</label>
                         </div>
                         <div class="row">
@@ -201,9 +209,9 @@ Admin Panel Web App -->
                             This will be updated with javascript as stops are added
                             Rows should display the name of the stop
                             They should be clickable, at which point the stop's location is
-                            displayed on the map 
-                            The remove-stop button removes the selected item from the table 
-                            TODO: The table will be numbered, and the user can drag and drop to sort 
+                            displayed on the map
+                            The remove-stop button removes the selected item from the table
+                            TODO: The table will be numbered, and the user can drag and drop to sort
                             -->
                             <div class="card p-2 m-1 bg-dark w-100 table-div">
                                 <table id="stop-table" class="table table-hover table-primary w-100">
@@ -228,7 +236,7 @@ Admin Panel Web App -->
                                 <button class="btn btn-danger" data-toggle="modal" data-target="#remove-stop-warning" id="remove-stop" type="button">Remove Stop</button>
                                 <div class="modal fade" id="remove-stop-warning"  tabindex="-1" role="dialog" aria-labelledby="remove-media-modal-title" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered" role="document">
-                                        <div class="modal-content"> 
+                                        <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="remove-stop-modal-title">Removing Stop</h5>
                                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -255,7 +263,7 @@ Admin Panel Web App -->
                                 <button class="btn btn-success" data-toggle="modal" data-target="#add-stop-popup" id="add-stop" type="button">Add Stop</button>
                                 <div class="modal fade" id="add-stop-popup"  tabindex="-1" role="dialog" aria-labelledby="add-stop-modal-title" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered" role="document">
-                                        <div class="modal-content"> 
+                                        <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="add-stop-modal-title">Add a stop</h5>
                                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -289,15 +297,15 @@ Admin Panel Web App -->
                             </div>
                         </div>
                         <div class="row mt-4 justify-content-center">
-                            <button class="btn btn-primary btn-lg btn-save" id="save-tour" type="button">Save this tour!</button>                               
+                            <button class="btn btn-primary btn-lg btn-save" id="save-tour" type="button">Save this tour!</button>
                         </div>
 
                         <!--delete tour button, initially hidden-->
                         <div class="row mt-4 justify-content-center">
-                            <button class="btn btn-danger btn-delete" id="delete-tour" data-toggle="modal" data-target="#delete-tour-popup" type="button" style="visibility:hidden">Delete this tour</button>                               
+                            <button class="btn btn-danger btn-delete" id="delete-tour" data-toggle="modal" data-target="#delete-tour-popup" type="button" style="visibility:hidden">Delete this tour</button>
                             <div class="modal fade" id="delete-tour-popup"  tabindex="-1" role="dialog" aria-labelledby="delete-tour-modal-title" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered" role="document">
-                                    <div class="modal-content"> 
+                                    <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title" id="delete-tour-modal-title">Confirm Tour Deletion</h5>
                                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -322,7 +330,7 @@ Admin Panel Web App -->
                         </div>
                     </div>
                 </div>
-            </div>        
+            </div>
         </div>
 
         <!--stop page-->
@@ -344,6 +352,15 @@ Admin Panel Web App -->
                                 <input type="text" name="stop-title" class="title" id="stop-title" >
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-lg-3">
+                                <label for="stop-id">Stop ID:</label>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="text" name="stop-id" class="title" id="stop-id" >
+                            </div>
+                        </div>
+                        <!-- here max -->
                         <div class="row">
                             <label class="description" for="stop-description">Stop Description:</label>
                         </div>
@@ -385,11 +402,11 @@ Admin Panel Web App -->
                                 </table>
                             </div>
                         </div>
-                            
+
                         <!--modal for changing the caption on a media item for a particular stop-->
                         <div class="modal fade" id="media-table-popup"  tabindex="-1" role="dialog" aria-labelledby="media-table-modal-title" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content"> 
+                                <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="media-table-modal-title"></h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -425,7 +442,7 @@ Admin Panel Web App -->
                                 <button class="btn btn-danger" data-toggle="modal" data-target="#remove-media-warning" id="remove-media" type="button">Remove Media</button>
                                 <div class="modal fade" id="remove-media-warning"  tabindex="-1" role="dialog" aria-labelledby="remove-media-modal-title" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered" role="document">
-                                        <div class="modal-content"> 
+                                        <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="remove-media-modal-title">Removing Media</h5>
                                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -452,7 +469,7 @@ Admin Panel Web App -->
                                 <button class="btn btn-success" data-toggle="modal" data-target="#add-media-popup" id="add-media" type="button">Add Media</button>
                                 <div class="modal fade" id="add-media-popup"  tabindex="-1" role="dialog" aria-labelledby="add-media-modal-title" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered" role="document">
-                                        <div class="modal-content"> 
+                                        <div class="modal-content">
                                             <div class="modal-header">
                                                 <h5 class="modal-title" id="add-media-modal-title">Add media to the stop</h5>
                                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -478,11 +495,11 @@ Admin Panel Web App -->
                             </div>
                         </div>
                         <div class="row mt-4 justify-content-center">
-                            <button class="btn btn-primary btn-lg btn-save" id="save-stop" type="button">Save this stop!</button>                                
+                            <button class="btn btn-primary btn-lg btn-save" id="save-stop" type="button">Save this stop!</button>
                         </div>
                     </div>
                 </div>
-            </div>  
+            </div>
         </div>
 
 
@@ -525,7 +542,7 @@ Admin Panel Web App -->
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row mt-5 justify-content-center">
                     <button class="btn btn-primary btn-save" id="upload-media" type="button">Save Media!</button>
                 </div>
