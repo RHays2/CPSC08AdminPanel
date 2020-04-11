@@ -21,6 +21,11 @@ var addedMedia = {}, addedStops = {};
 // they are each a dictionary with keys representing titles
 var existingMedia = {}, existingStops = {}, existingTours = {};
 
+// this variable will hold the object that contains the quill text editor
+var quillEditor = undefined;
+// this variable holds the last known cursor location within the editor
+var cursorLocation = undefined;
+
 window.addEventListener("load", function () {
     // Initialize firebase 
     const firebaseConfig = {
@@ -458,7 +463,7 @@ window.addEventListener("load", function () {
             console.log("save the media");
             var preview = document.getElementById('media-preview');
             // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
-            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue};
+            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": uuidv4()};
             console.log(existingMedia);
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
@@ -485,6 +490,11 @@ window.addEventListener("load", function () {
                  option.text = option.value = titleValue;
                  option.selected = true; // the newly created media should be selected
                  existingMediaSelect.add(option);
+                 // make an option in the add media to stop description
+                 var existingMediaForDescription = document.getElementById("existing-media-for-description");
+                 var option = document.createElement('option');
+                 option.text = option.value = titleValue;
+                 existingMediaForDescription.add(option);
                  // make an option in the edit media modal's dropdown
                  var editMediaSelect = document.getElementById("edit-existing-media");
                  var option = document.createElement('option');
@@ -506,6 +516,44 @@ window.addEventListener("load", function () {
     $('#media-title').on('input', function() {
         $("#media-title").popover('dispose');
     }); 
+
+    $('#confirm-add-media-to-description').click(function() {
+        var existingMediaSelect = document.getElementById("existing-media-for-description");
+        var selectedMedia = existingMediaSelect.value;
+        if (selectedMedia in existingMedia) {
+            let src = existingMedia[selectedMedia]['media-item'];
+            let caption = existingMedia[selectedMedia]['caption'];
+            let id = existingMedia[selectedMedia]['id'];
+            
+            //add the image at the cursor location
+            if (quillEditor !== undefined) {
+                //get cursor location
+                var index = quillEditor.getLength() - 1;
+                if (cursorLocation !== undefined) {
+                    index = cursorLocation.index;
+                }
+
+                let initialLength = quillEditor.getLength();
+                quillEditor.insertEmbed(index, 'image', {
+                    src: src,
+                    id: id,
+                    style: 'width: 75%; display: block; margin-left: auto; margin-right: auto;'
+                });
+
+                let curLength = quillEditor.getLength();
+                let offset = curLength - initialLength;
+                quillEditor.insertEmbed(index + offset, 'caption', {
+                    id: id,
+                    text: caption,
+                    style: 'font-size: 12px;'
+                });
+            }
+        }
+        $('#add-image-to-description-modal').modal('hide');
+    });
+
+    //initialize the quill rich text editor for the stop description
+    initializeQuillEditor();
 });
 
 
@@ -864,3 +912,119 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
         'Error: Your browser doesn\'t support geolocation.');
     infoWindow.open(map);
 }
+
+function initializeQuillEditor() {
+    let AlignStyle = Quill.import('attributors/style/align')
+    let BackgroundStyle = Quill.import('attributors/style/background')
+    let ColorStyle = Quill.import('attributors/style/color')
+    let DirectionStyle = Quill.import('attributors/style/direction')
+    let FontStyle = Quill.import('attributors/style/font')
+    var SizeStyle = Quill.import('attributors/style/size');  
+    delete SizeStyle.whitelist;
+
+    Quill.register(AlignStyle, true);
+    Quill.register(BackgroundStyle, true);
+    Quill.register(ColorStyle, true);
+    Quill.register(DirectionStyle, true);
+    Quill.register(FontStyle, true);
+    Quill.register(SizeStyle, true);
+
+    var toolbarOptions = [
+        ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+
+        [{ 'size': ['12px', false, '30px', '40px'] }],
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'align': [] }],
+        ['image']                                      // remove formatting button
+    ];
+    quillEditor = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: {
+                container: toolbarOptions,
+                handlers: {
+                    'image': imageButtonHandler
+                }
+            }
+        }
+    });
+
+    //dont require image addresses to be sanitized
+    var Image = Quill.import('formats/image');
+    Image.sanitize = function(url) {
+        return url; // You can modify the URL here
+    };
+
+    //create new image blot so that we can insert and id into the image html tag
+    registerImageBlotToQuill();
+    registerCaptionBlotToQuill();
+}
+
+function registerImageBlotToQuill() {
+    var BlockEmbed = Quill.import('blots/block/embed');
+    class ImageBlot extends BlockEmbed {
+        static create(data) {
+            const node = super.create(data);
+            node.setAttribute('src', data.src);
+            node.setAttribute('id', data.id);
+            node.setAttribute('style', data.style)
+            return node;
+        }
+        static value(node) {
+            return {
+                src: node.src,
+                id: node.id,
+                style: node.style
+            }
+        }
+    }
+    ImageBlot.blotName = 'image';
+    ImageBlot.tagName = 'img';
+    Quill.register({ 'formats/image': ImageBlot });
+}
+
+function registerCaptionBlotToQuill() {
+    var InlineEmbed = Quill.import('blots/embed');
+    class CaptionBlot extends InlineEmbed {
+        static create(data) {
+            const node = super.create(data);
+            node.setAttribute('id', data.id);
+            node.innerHTML = data.text
+            node.setAttribute('style', data.style)
+            return node;
+        }
+        static value(node) {
+            return {
+                id: node.id,
+                text: node.innerHTML,
+                style: node.style
+            }
+        }
+    }
+    CaptionBlot.blotName = 'caption';
+    CaptionBlot.tagName = 'p';
+    Quill.register({ 'formats/caption': CaptionBlot });
+}
+
+/*
+    function called when the image icon button is pressed in the text editor
+*/
+function imageButtonHandler() {
+    //set the current cursor location
+    if (quillEditor !== undefined) {
+        cursorLocation = quillEditor.getSelection();
+    }
+    //open the modal to pick the image
+    $('#add-image-to-description-modal').modal({});
+}
+
+function getHtmlFromEditor() {
+  let html = quill.root.innerHTML;
+  //replace tabs with 4 spaces so they actually show up
+  html = html.replace(/\t/, "&nbsp;&nbsp;&nbsp;&nbsp;");
+  return html;
+}
+

@@ -38,3 +38,46 @@
     height: 350px;
     overflow-y: auto;
 } */
+
+/*
+    Quill RTE CSS
+*/
+#editor {
+    width: 100%;
+    height: 100%;
+}
+.ql-editor {
+    font-size: 20px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before {
+  content: 'Small';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before {
+  font-size: 12px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="30px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="30px"]::before {
+  content: 'Large';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="30px"]::before {
+  font-size: 30px;
+}
+
+.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="40px"]::before,
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="40px"]::before {
+  content: 'Huge';
+}
+.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="40px"]::before {
+  font-size: 40px;
+}
+
+.quill-img {
+    width: 100%;
+}
+
+#editor-container.row {
+    min-width: 100%;
+}
