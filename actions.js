@@ -259,15 +259,35 @@ window.addEventListener("load", function () {
                 // TODO: upload entire tour
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
+                var stopsRef = databaseRef.child("stops");
                 /*toursRef.push({
 
                 });*/
-                var id = toursRef.push({
+                var newTourRef = toursRef.push({
                   description: descriptionValue,
                   length: numRows,
                   name: titleValue,
                   preview_image: fileName
                 })
+
+
+                //saving all of the stop informations to the tour
+                 //first gets a reference to the tour database key                 
+                 let tourId = newTourRef.key                 
+                 var count = 1;                 
+                 var stop;                 
+                 //iterating through the stops                 
+                 for(stop of Object.keys(addedStops)){                 
+                    //pushes to the database the tour object                 
+                    var newStopRef = stopsRef.child(tourId).push({                     
+                        description: addedStops[stop]["description"],                     
+                        lat: addedStops[stop]["location"]["lat"],                     
+                        lng: addedStops[stop]["location"]["lng"],                     
+                        name: stop,                     
+                        stop_order: count                      
+                        })                      
+                        count++;
+                    }
 
 
             }
