@@ -124,9 +124,10 @@ window.addEventListener("load", function () {
             $("#edit-existing-stop").click(); // bring up the popover
         } else {
             clearStopFields();
-            document.getElementById("stop-title").value = selectedStop;
+            document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
             // here max  reenter saved description
             document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
+             document.getElementById("stop-id").value = selectedStop;
             // add media back to the table
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(addedMedia);
@@ -272,24 +273,21 @@ window.addEventListener("load", function () {
 
 
                 //saving all of the stop informations to the tour
-                 //first gets a reference to the tour database key                 
-                 let tourId = newTourRef.key                 
-                 var count = 1;                 
-                 var stop;                 
-                 //iterating through the stops                 
-                 for(stop of Object.keys(addedStops)){                 
-                    //pushes to the database the tour object                 
-                    var newStopRef = stopsRef.child(tourId).push({                     
-                        description: addedStops[stop]["description"],                     
-                        lat: addedStops[stop]["location"]["lat"],                     
-                        lng: addedStops[stop]["location"]["lng"],                     
-                        name: stop,                     
-                        stop_order: count                      
-                        })                      
-                        count++;
+                 //first gets a reference to the tour database key
+                 let tourId = newTourRef.key
+                 var stop;
+                 //iterating through the stops
+                 for(stop of Object.keys(addedStops)){
+                    //pushes to the database the tour object
+                    var newStopRef = stopsRef.child(tourId).push({
+                        description: addedStops[stop]["description"],
+                        lat: addedStops[stop]["location"]["lat"],
+                        lng: addedStops[stop]["location"]["lng"],
+                        name: addedStops[stop]["title"],
+                        id: stop,
+                        stop_order: addedStops[stop]["stop_order"]
+                        })
                     }
-
-
             }
             clearTourFields();
 
@@ -382,17 +380,24 @@ window.addEventListener("load", function () {
 
         var title = document.getElementById("stop-title");
         var description = document.getElementById("stop-description"); // here max - preparing to save
+        var idField = document.getElementById("stop-id");
         var titleValue = title.value;
         var descriptionValue = description.value;
+        var idValue = idField.value;
+
 
         if (!titleValue) { // there must be a title
             $("#stop-title").popover('dispose');
             $("#stop-title").popover({ title: 'Error', content: "Title required"});
             $("#stop-title").click();
-        } else if (Object.keys(existingStops).includes(titleValue) && !editMode) { // title must be unique unless in edit mode
-            $("#stop-title").popover('dispose');
-            $("#stop-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#stop-title").click();
+        } else if (!idValue) {
+            $("#stop-id").popover('dispose');
+            $("#stop-id").popover({ title: 'Error', content: "id required"});
+            $("#stop-id").click();
+        } else if (Object.keys(existingStops).includes(idValue) && !editMode) { // title must be unique unless in edit mode
+            $("#stop-id").popover('dispose');
+            $("#stop-id").popover({ title: 'Error', content: "Id must be unique"});
+            $("#stop-id").click();
         } else if (!selectedLocation) { // there must be a location
             $("#stop-map").popover('dispose');
             $("#stop-map").popover({ title: 'Error',
@@ -401,13 +406,15 @@ window.addEventListener("load", function () {
             $("#stop-map").click();
         } else {
             // save the stop
-            existingStops[titleValue] = { // here max  creating the object inc the description
+            existingStops[idValue] = { // here max  creating the object inc the description
                 "description": descriptionValue,
                 "media": addedMedia,
                 "location": {
                     lat: selectedLocation.position.lat(),
                     lng: selectedLocation.position.lng()
-                }
+                },
+                "id": idValue,
+                "title": titleValue
             };
             clearStopFields();
 
@@ -419,13 +426,13 @@ window.addEventListener("load", function () {
                 // make an option in the add stop modal's dropdown
                 var existingMediaSelect = document.getElementById("existing-stops");
                 var option = document.createElement('option');
-                option.text = option.value = titleValue;
+                option.text = option.value = idValue;
                 option.selected = true; // the newly created stop should be selected
                 existingMediaSelect.add(option);
                 // make an option in the edit stop modal's dropdown
                 var editStopSelect = document.getElementById("edit-existing-stop");
                 var option = document.createElement('option');
-                option.text = option.value = titleValue;
+                option.text = option.value = idValue;
                 editStopSelect.add(option);
 
                 $('#nav-pills a[href="#tour-page"]').tab('show');
@@ -436,9 +443,14 @@ window.addEventListener("load", function () {
         }
     });
 
-    // Remove the warning next time the media-title box is clicked
+    // Remove the warning next time the stop-title box is clicked
     $('#stop-title').on('input', function(e) {
         $("#stop-title").popover('dispose');
+    });
+
+    // Remove the warning next time the stop-id box is clicked
+    $('#stop-id').on('input', function(e) {
+        $("#stop-id").popover('dispose');
     });
 
     // clicking a row in the media table highlights it
@@ -585,7 +597,7 @@ function removeTourWarnings() {
 
 function removeStopWarnings() {
     $("#existing-media").popover('dispose');
-    $("#stop-title").popover('dispose');
+    $("#stop-id").popover('dispose');
     $("#stop-map").popover('dispose');
 
 }
@@ -675,9 +687,11 @@ function clearMediaFields() {
 function clearStopFields() {
     var title = document.getElementById("stop-title");
     var description = document.getElementById("stop-description") // here max
+    var idField = document.getElementById("stop-id");
     // clear the fields
     title.value = "";
     description.value = "";
+    idField.value = "";
     selectedLocation = undefined;
     // clear table
     mediaTableBody = document.getElementById("stop-media");
@@ -723,7 +737,7 @@ function loadFile(e) {
 
 // MARK: functions to update the tables when
 //       an item is added
-function updateStopTable(name) {
+function updateStopTable(id) {
     var stopTable = document.getElementById("tour-stops");
     var row = stopTable.insertRow(-1); // put the new row at the bottom
     row.className = 'clickable-row';
@@ -735,12 +749,12 @@ function updateStopTable(name) {
     cellRowNumber.innerHTML = "<img src=" + numberImageFile + " >"
 
     // add to added media, add stop_order
-    addedStops[name] = existingStops[name];
-    addedStops[name]["stop_order"] = numRows;
+    addedStops[id] = existingStops[id];
+    addedStops[id]["stop_order"] = numRows;
 
     // add media name
     var cell = row.insertCell(1);
-    cell.innerHTML = name;
+    cell.innerHTML = addedStops[id]["title"];
 
     // TODO: Add event listeners when a stop is double clicked
     // to display the tour's description and a list of
@@ -753,7 +767,6 @@ function updateStopTable(name) {
         var stop = existingStops[name];
         replaceMarkerAndPanTo(new google.maps.LatLng(stop.location, stop.location));
     });
-
 
 
 }
