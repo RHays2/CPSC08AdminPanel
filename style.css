@@ -81,3 +81,14 @@
 #editor-container.row {
     min-width: 100%;
 }
+
+.quill-editor-img {
+    width: 75%; 
+    display: block; 
+    margin-left: auto; 
+    margin-right: auto;
+}
+
+.quill-editor-caption {
+    font-size: 12px;
+}
