@@ -261,15 +261,19 @@ window.addEventListener("load", function () {
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
                 var stopsRef = databaseRef.child("stops");
+                //get reference to database for assets
+                var assetsRef = databaseRef.child("assets");
+
+                
                 /*toursRef.push({
 
                 });*/
                 var newTourRef = toursRef.push({
-                  description: descriptionValue,
-                  length: numRows,
-                  name: titleValue,
-                  preview_image: fileName
-                })
+                    description: descriptionValue,
+                    length: numRows,
+                    name: titleValue,
+                    preview_image: fileName
+                  })
 
 
                 //saving all of the stop informations to the tour
@@ -280,14 +284,31 @@ window.addEventListener("load", function () {
                  for(stop of Object.keys(addedStops)){
                     //pushes to the database the tour object
                     var newStopRef = stopsRef.child(tourId).push({
-                        description: addedStops[stop]["description"],
-                        lat: addedStops[stop]["location"]["lat"],
-                        lng: addedStops[stop]["location"]["lng"],
-                        name: addedStops[stop]["title"],
-                        id: stop,
-                        stop_order: addedStops[stop]["stop_order"]
-                        })
+                    description: addedStops[stop]["description"],
+                    lat: addedStops[stop]["location"]["lat"],
+                    lng: addedStops[stop]["location"]["lng"],
+                    name: addedStops[stop]["title"],
+                    id: stop,
+                    stop_order: addedStops[stop]["stop_order"]
+                    })
+
+                    //adding the stops from the tour
+                    let stopId = newStopRef.key;
+                    var newAddedMedia = addedStops[stop]["media"];
+                    var asset;
+                    console.log(stopId);
+
+                    for(asset of Object.keys(newAddedMedia)){
+                        console.log("asset", asset);
+                        var newAssetsRef = assetsRef.child(stopId).push({
+                            description: newAddedMedia[asset]["caption"],
+                            name: asset,
+                            storage_name: newAddedMedia[asset]["file_name"]
+                        });
                     }
+
+                        
+                }
             }
             clearTourFields();
 
@@ -539,17 +560,21 @@ window.addEventListener("load", function () {
                     var name = file.name;
                     var lastDot = name.lastIndexOf('.');
                     var extension = name.substring(lastDot + 1);
-
+                   
                     // Create a root reference
                     var storageRef = firebase.storage().ref();
                     var fileName = titleValue + "." + extension;
+                    existingMedia[titleValue]["file_name"] = fileName;
                     console.log(fileName);
                     var fileLoc = 'images/' + fileName;
+                    existingMedia[titleValue]["file_name"] = fileName;
                     // create a child for the new file
                     var spaceRef = storageRef.child(fileLoc);
                     spaceRef.put(file).then(function(snapshot) {
                         console.log('Uploaded!');
                     });
+
+                    
                 }
                  // make an option in the add media modal's dropdown
                  var existingMediaSelect = document.getElementById("existing-media");
