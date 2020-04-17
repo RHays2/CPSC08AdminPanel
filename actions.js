@@ -129,11 +129,12 @@ window.addEventListener("load", function () {
             $("#edit-existing-stop").click(); // bring up the popover
         } else {
             clearStopFields();
-            document.getElementById("stop-title").value = selectedStop;
+            document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
             // here max  reenter saved description
-            //document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
             const delta = quillEditor.clipboard.convert(existingStops[selectedStop]["description"]);
             quillEditor.setContents(delta);
+            //document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
+            document.getElementById("stop-id").value = selectedStop;
             // add media back to the table
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(addedMedia);
@@ -267,19 +268,54 @@ window.addEventListener("load", function () {
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
                 var stopsRef = databaseRef.child("stops");
+                //get reference to database for assets
+                var assetsRef = databaseRef.child("assets");
+
+                
                 /*toursRef.push({
 
                 });*/
                 var newTourRef = toursRef.push({
-                  description: descriptionValue,
-                  length: numRows,
-                  name: titleValue,
-                  preview_image: fileName
-                })
+                    description: descriptionValue,
+                    length: numRows,
+                    name: titleValue,
+                    preview_image: fileName
+                  })
 
-                let tourId = newTourRef.key
 
-                stopsRef.child(tourId).set({name: 'hello world'}) 
+                //saving all of the stop informations to the tour
+                 //first gets a reference to the tour database key
+                 let tourId = newTourRef.key
+                 var stop;
+                 //iterating through the stops
+                 for(stop of Object.keys(addedStops)){
+                    //pushes to the database the tour object
+                    var newStopRef = stopsRef.child(tourId).push({
+                    description: sanitizeForDatabase(addedStops[stop]["description"]),
+                    lat: addedStops[stop]["location"]["lat"],
+                    lng: addedStops[stop]["location"]["lng"],
+                    name: addedStops[stop]["title"],
+                    id: stop,
+                    stop_order: addedStops[stop]["stop_order"]
+                    })
+
+                    //adding the stops from the tour
+                    let stopId = newStopRef.key;
+                    var newAddedMedia = addedStops[stop]["media"];
+                    var asset;
+                    console.log(stopId);
+
+                    for(asset of Object.keys(newAddedMedia)){
+                        console.log("asset", asset);
+                        var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
+                            description: newAddedMedia[asset]["caption"],
+                            name: asset,
+                            storage_name: newAddedMedia[asset]["file_name"]
+                        });
+                    }
+
+                        
+                }
             }
             clearTourFields();
 
@@ -371,18 +407,28 @@ window.addEventListener("load", function () {
         e.preventDefault();
 
         var title = document.getElementById("stop-title");
-        //var description = getHtmlFromEditor();//document.getElementById("stop-description"); // here max - preparing to save
+        /*//var description = getHtmlFromEditor();//document.getElementById("stop-description"); // here max - preparing to save
         var titleValue = title.value;
-        var descriptionValue = getHtmlFromEditor();//description.value;
+        var descriptionValue = getHtmlFromEditor();//description.value;*/
+        //var description = document.getElementById("stop-description"); // here max - preparing to save
+        var idField = document.getElementById("stop-id");
+        var titleValue = title.value;
+        var descriptionValue = getHtmlFromEditor();
+        var idValue = idField.value;
+
 
         if (!titleValue) { // there must be a title
             $("#stop-title").popover('dispose');
             $("#stop-title").popover({ title: 'Error', content: "Title required"});
             $("#stop-title").click();
-        } else if (Object.keys(existingStops).includes(titleValue) && !editMode) { // title must be unique unless in edit mode
-            $("#stop-title").popover('dispose');
-            $("#stop-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#stop-title").click();
+        } else if (!idValue) {
+            $("#stop-id").popover('dispose');
+            $("#stop-id").popover({ title: 'Error', content: "id required"});
+            $("#stop-id").click();
+        } else if (Object.keys(existingStops).includes(idValue) && !editMode) { // title must be unique unless in edit mode
+            $("#stop-id").popover('dispose');
+            $("#stop-id").popover({ title: 'Error', content: "Id must be unique"});
+            $("#stop-id").click();
         } else if (!selectedLocation) { // there must be a location
             $("#stop-map").popover('dispose');
             $("#stop-map").popover({ title: 'Error',
@@ -391,13 +437,15 @@ window.addEventListener("load", function () {
             $("#stop-map").click();
         } else {
             // save the stop
-            existingStops[titleValue] = { // here max  creating the object inc the description
+            existingStops[idValue] = { // here max  creating the object inc the description
                 "description": descriptionValue,
                 "media": addedMedia,
                 "location": {
                     lat: selectedLocation.position.lat(),
                     lng: selectedLocation.position.lng()
-                }
+                },
+                "id": idValue,
+                "title": titleValue
             };
             clearStopFields();
 
@@ -409,13 +457,13 @@ window.addEventListener("load", function () {
                 // make an option in the add stop modal's dropdown
                 var existingMediaSelect = document.getElementById("existing-stops");
                 var option = document.createElement('option');
-                option.text = option.value = titleValue;
+                option.text = option.value = idValue;
                 option.selected = true; // the newly created stop should be selected
                 existingMediaSelect.add(option);
                 // make an option in the edit stop modal's dropdown
                 var editStopSelect = document.getElementById("edit-existing-stop");
                 var option = document.createElement('option');
-                option.text = option.value = titleValue;
+                option.text = option.value = idValue;
                 editStopSelect.add(option);
 
                 $('#nav-pills a[href="#tour-page"]').tab('show');
@@ -426,9 +474,14 @@ window.addEventListener("load", function () {
         }
     });
 
-    // Remove the warning next time the media-title box is clicked
+    // Remove the warning next time the stop-title box is clicked
     $('#stop-title').on('input', function(e) {
         $("#stop-title").popover('dispose');
+    });
+
+    // Remove the warning next time the stop-id box is clicked
+    $('#stop-id').on('input', function(e) {
+        $("#stop-id").popover('dispose');
     });
 
     // clicking a row in the media table highlights it
@@ -468,7 +521,10 @@ window.addEventListener("load", function () {
         var selectedRow = document.querySelector('#stop-media > .bg-info');
         var name = selectedRow.cells[1].innerHTML;
         tableBody.removeChild(selectedRow);
+        removeMediaFromDescription(name);
         delete addedMedia[name];
+
+        //max remove media from tour description
     });
 
     // move an item up in the table
@@ -519,17 +575,21 @@ window.addEventListener("load", function () {
                     var name = file.name;
                     var lastDot = name.lastIndexOf('.');
                     var extension = name.substring(lastDot + 1);
-
+                   
                     // Create a root reference
                     var storageRef = firebase.storage().ref();
                     var fileName = titleValue + "." + extension;
+                    existingMedia[titleValue]["file_name"] = fileName;
                     console.log(fileName);
                     var fileLoc = 'images/' + fileName;
+                    existingMedia[titleValue]["file_name"] = fileName;
                     // create a child for the new file
                     var spaceRef = storageRef.child(fileLoc);
                     spaceRef.put(file).then(function(snapshot) {
                         console.log('Uploaded!');
                     });
+
+                    
                 }
                  // make an option in the add media modal's dropdown
                  var existingMediaSelect = document.getElementById("existing-media");
@@ -620,7 +680,7 @@ function removeTourWarnings() {
 
 function removeStopWarnings() {
     $("#existing-media").popover('dispose');
-    $("#stop-title").popover('dispose');
+    $("#stop-id").popover('dispose');
     $("#stop-map").popover('dispose');
 
 }
@@ -708,16 +768,28 @@ function clearMediaFields() {
 }
 
 function clearStopFields() {
-    var title = document.getElementById("stop-title");
-    var description = document.getElementById("stop-description") // here max
+    var title = document.getElementById("stop-title"); // here max
+    var idField = document.getElementById("stop-id");
     // clear the fields
+    if (quillEditor != undefined) {
+        quillEditor.setText("");
+    }
     title.value = "";
-    description.value = "";
+    idField.value = "";
     selectedLocation = undefined;
     // clear table
     mediaTableBody = document.getElementById("stop-media");
     mediaTableBody.innerHTML = "";
     addedMedia = {};
+    //clear the image select from description
+    var select = $('#existing-media-for-description');
+    if (select !== null) {
+        select.empty();
+        select.append($('<option>', {
+            value: 1,
+            text: 'Select a media item...'
+        }));
+    }
 }
 
 function clearTourFields() {
@@ -730,6 +802,9 @@ function clearTourFields() {
     stopsTableBody = document.getElementById("tour-stops");
     stopsTableBody.innerHTML = "";
     addedStops = {};
+    //clear preview image
+    var preview = document.getElementById("tour-preview-image");
+    preview.value = "";
 }
 
 // trigger by onchange on the html element media-item
@@ -758,7 +833,7 @@ function loadFile(e) {
 
 // MARK: functions to update the tables when
 //       an item is added
-function updateStopTable(name) {
+function updateStopTable(id) {
     var stopTable = document.getElementById("tour-stops");
     var row = stopTable.insertRow(-1); // put the new row at the bottom
     row.className = 'clickable-row';
@@ -770,12 +845,12 @@ function updateStopTable(name) {
     cellRowNumber.innerHTML = "<img src=" + numberImageFile + " >"
 
     // add to added media, add stop_order
-    addedStops[name] = existingStops[name];
-    addedStops[name]["stop_order"] = numRows;
+    addedStops[id] = existingStops[id];
+    addedStops[id]["stop_order"] = numRows;
 
     // add media name
     var cell = row.insertCell(1);
-    cell.innerHTML = name;
+    cell.innerHTML = addedStops[id]["title"];
 
     // TODO: Add event listeners when a stop is double clicked
     // to display the tour's description and a list of
@@ -788,7 +863,6 @@ function updateStopTable(name) {
         var stop = existingStops[name];
         replaceMarkerAndPanTo(new google.maps.LatLng(stop.location, stop.location));
     });
-
 
 
 }
@@ -1117,10 +1191,12 @@ function getHtmlFromEditor() {
 }
 
 function sanitizeForDatabase(html) {
-    //replace tabs with 4 spaces so they actually show up
-    html = html.replace(/\t/, "&nbsp;&nbsp;&nbsp;&nbsp;");
     //replace images and captions with just the image id
     html = removeImagesFromHtml(html);
+    //replace tabs with 4 spaces so they actually show up
+    html = html.replace(/\t/, "&nbsp;&nbsp;&nbsp;&nbsp;");
+    //replace double quotes with single quotes
+    html = html.replace(/"/g, "'");
     return html;
 }
 
@@ -1130,21 +1206,49 @@ function removeImagesFromHtml(html) {
         for (var key in existingMedia) {
             var imgElem = doc.getElementById(existingMedia[key].id);
             var pElem = doc.getElementById("caption_" + existingMedia[key].id);
-            if (imgElem !== undefined) {
+            if (imgElem !== null) {
                 imgElem.removeAttribute('src');
                 imgElem.removeAttribute('style');
             }
             var body = doc.querySelector('body');
-            if (pElem !== undefined) {
-                if (body !== undefined) {
+            if (pElem !== null) {
+                if (body !== null) {
                     body.removeChild(pElem);
                 }
             }
         }
-        if (body !== undefined) {
+        if (body !== null) {
             return body.innerHTML;
         }
     }
     return html;
+}
+
+function removeMediaFromDescription(name) {
+    //get the media
+    let media = addedMedia[name];
+    //get the html from description
+    if (quillEditor != undefined) {
+        var html = getHtmlFromEditor();
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        //determine if the media being removed is in the description
+        var imgElem = doc.getElementById(media.id);
+        var pElem = doc.getElementById("caption_" + media.id);
+
+        if (imgElem != null) {
+            imgElem.remove();
+        }
+        if (pElem != null) {
+            pElem.remove()
+        }
+
+        var body = doc.querySelector('body');
+        if (body != null) {
+            html = body.innerHTML;
+            const delta = quillEditor.clipboard.convert(html);
+            quillEditor.setContents(delta);
+        }
+    }
+    
 }
 
