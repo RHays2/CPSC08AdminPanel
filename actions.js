@@ -21,6 +21,11 @@ var addedMedia = {}, addedStops = {};
 // they are each a dictionary with keys representing titles
 var existingMedia = {}, existingStops = {}, existingTours = {};
 
+// this variable will hold the object that contains the quill text editor
+var quillEditor = undefined;
+// this variable holds the last known cursor location within the editor
+var cursorLocation = undefined;
+
 window.addEventListener("load", function () {
     // Initialize firebase
     const firebaseConfig = {
@@ -126,8 +131,10 @@ window.addEventListener("load", function () {
             clearStopFields();
             document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
             // here max  reenter saved description
-            document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
-             document.getElementById("stop-id").value = selectedStop;
+            const delta = quillEditor.clipboard.convert(existingStops[selectedStop]["description"]);
+            quillEditor.setContents(delta);
+            //document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
+            document.getElementById("stop-id").value = selectedStop;
             // add media back to the table
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(addedMedia);
@@ -284,7 +291,7 @@ window.addEventListener("load", function () {
                  for(stop of Object.keys(addedStops)){
                     //pushes to the database the tour object
                     var newStopRef = stopsRef.child(tourId).push({
-                    description: addedStops[stop]["description"],
+                    description: sanitizeForDatabase(addedStops[stop]["description"]),
                     lat: addedStops[stop]["location"]["lat"],
                     lng: addedStops[stop]["location"]["lng"],
                     name: addedStops[stop]["title"],
@@ -300,7 +307,7 @@ window.addEventListener("load", function () {
 
                     for(asset of Object.keys(newAddedMedia)){
                         console.log("asset", asset);
-                        var newAssetsRef = assetsRef.child(stopId).push({
+                        var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
                             description: newAddedMedia[asset]["caption"],
                             name: asset,
                             storage_name: newAddedMedia[asset]["file_name"]
@@ -400,10 +407,13 @@ window.addEventListener("load", function () {
         e.preventDefault();
 
         var title = document.getElementById("stop-title");
-        var description = document.getElementById("stop-description"); // here max - preparing to save
+        /*//var description = getHtmlFromEditor();//document.getElementById("stop-description"); // here max - preparing to save
+        var titleValue = title.value;
+        var descriptionValue = getHtmlFromEditor();//description.value;*/
+        //var description = document.getElementById("stop-description"); // here max - preparing to save
         var idField = document.getElementById("stop-id");
         var titleValue = title.value;
-        var descriptionValue = description.value;
+        var descriptionValue = getHtmlFromEditor();
         var idValue = idField.value;
 
 
@@ -493,6 +503,12 @@ window.addEventListener("load", function () {
             // restore default for the select existing media dropdown
             document.getElementById("select-media-default").selected = true;
             $('#add-media-popup').modal('hide');
+
+            // make an option in the add media to stop description
+            var existingMediaForDescription = document.getElementById("existing-media-for-description");
+            var option = document.createElement('option');
+            option.text = option.value = selectedMedia;
+            existingMediaForDescription.add(option);
         }
     });
 
@@ -511,6 +527,10 @@ window.addEventListener("load", function () {
         var selectedRow = document.querySelector('#stop-media > .bg-info');
         var name = selectedRow.cells[1].innerHTML;
         tableBody.removeChild(selectedRow);
+        //remove media from description
+        removeMediaFromDescription(name);
+        //remove media from media for description selector
+        removeMediaFromDescriptionSelector(name);
         delete addedMedia[name];
     });
 
@@ -548,7 +568,9 @@ window.addEventListener("load", function () {
             // save the media item
             var preview = document.getElementById('media-preview');
             // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
-            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue};
+            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": uuidv4()};
+            console.log(existingMedia);
+
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = true;
@@ -582,6 +604,11 @@ window.addEventListener("load", function () {
                  option.text = option.value = titleValue;
                  option.selected = true; // the newly created media should be selected
                  existingMediaSelect.add(option);
+                 // make an option in the add media to stop description
+                 /*var existingMediaForDescription = document.getElementById("existing-media-for-description");
+                 var option = document.createElement('option');
+                 option.text = option.value = titleValue;
+                 existingMediaForDescription.add(option);*/
                  // make an option in the edit media modal's dropdown
                  var editMediaSelect = document.getElementById("edit-existing-media");
                  var option = document.createElement('option');
@@ -602,7 +629,45 @@ window.addEventListener("load", function () {
     // Remove the warning next time the media-title box is clicked
     $('#media-title').on('input', function() {
         $("#media-title").popover('dispose');
+    }); 
+
+    $('#confirm-add-media-to-description').click(function() {
+        var existingMediaSelect = document.getElementById("existing-media-for-description");
+        var selectedMedia = existingMediaSelect.value;
+        if (selectedMedia in existingMedia) {
+            let src = existingMedia[selectedMedia]['media-item'];
+            let caption = existingMedia[selectedMedia]['caption'];
+            let id = existingMedia[selectedMedia]['id'];
+            
+            //add the image at the cursor location
+            if (quillEditor !== undefined) {
+                //get cursor location
+                var index = quillEditor.getLength() - 1;
+                if (cursorLocation !== undefined) {
+                    index = cursorLocation.index;
+                }
+
+                let initialLength = quillEditor.getLength();
+                quillEditor.insertEmbed(index, 'image', {
+                    src: src,
+                    id: id,
+                    class: 'quill-editor-img'
+                });
+
+                let curLength = quillEditor.getLength();
+                let offset = curLength - initialLength;
+                quillEditor.insertEmbed(index + offset, 'caption', {
+                    id: 'caption_' + id,
+                    text: caption,
+                    class: 'quill-editor-caption'
+                });
+            }
+        }
+        $('#add-image-to-description-modal').modal('hide');
     });
+
+    //initialize the quill rich text editor for the stop description
+    initializeQuillEditor();
 });
 
 
@@ -710,18 +775,28 @@ function clearMediaFields() {
 }
 
 function clearStopFields() {
-    var title = document.getElementById("stop-title");
-    var description = document.getElementById("stop-description") // here max
+    var title = document.getElementById("stop-title"); // here max
     var idField = document.getElementById("stop-id");
     // clear the fields
+    if (quillEditor != undefined) {
+        quillEditor.setText("");
+    }
     title.value = "";
-    description.value = "";
     idField.value = "";
     selectedLocation = undefined;
     // clear table
     mediaTableBody = document.getElementById("stop-media");
     mediaTableBody.innerHTML = "";
     addedMedia = {};
+    //clear the image select from description
+    var select = $('#existing-media-for-description');
+    if (select !== null) {
+        select.empty();
+        select.append($('<option>', {
+            value: 1,
+            text: 'Select a media item...'
+        }));
+    }
 }
 
 function clearTourFields() {
@@ -734,6 +809,9 @@ function clearTourFields() {
     stopsTableBody = document.getElementById("tour-stops");
     stopsTableBody.innerHTML = "";
     addedStops = {};
+    //clear preview image
+    var preview = document.getElementById("tour-preview-image");
+    preview.value = "";
 }
 
 // trigger by onchange on the html element media-item
@@ -984,3 +1062,213 @@ function handleLocationError(browserHasGeolocation, infoWindow, pos) {
         'Error: Your browser doesn\'t support geolocation.');
     infoWindow.open(map);
 }
+
+function initializeQuillEditor() {
+    let AlignStyle = Quill.import('attributors/style/align')
+    let BackgroundStyle = Quill.import('attributors/style/background')
+    let ColorStyle = Quill.import('attributors/style/color')
+    let DirectionStyle = Quill.import('attributors/style/direction')
+    let FontStyle = Quill.import('attributors/style/font')
+    var SizeStyle = Quill.import('attributors/style/size');  
+    delete SizeStyle.whitelist;
+
+    Quill.register(AlignStyle, true);
+    Quill.register(BackgroundStyle, true);
+    Quill.register(ColorStyle, true);
+    Quill.register(DirectionStyle, true);
+    Quill.register(FontStyle, true);
+    Quill.register(SizeStyle, true);
+
+    var toolbarOptions = [
+        ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+
+        [{ 'size': ['12px', false, '30px', '40px'] }],
+        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+        [{ 'align': [] }],
+        ['image']                                      // remove formatting button
+    ];
+    quillEditor = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: {
+                container: toolbarOptions,
+                handlers: {
+                    'image': imageButtonHandler
+                }
+            },
+            clipboard: {
+                matchVisual: false
+            }
+        }
+    });
+
+    //dont require image addresses to be sanitized
+    var Image = Quill.import('formats/image');
+    Image.sanitize = function(url) {
+        return url; // You can modify the URL here
+    };
+
+    var Delta = Quill.import('delta');
+    /*quillEditor.clipboard.addMatcher('p', function(node, delta) {
+        var classVal = node.classList.value;
+
+        if (classVal.includes('quill-editor-caption')) {
+            var embed = {};
+            var val = {}
+            val['id'] = node['id'];
+            val['class'] = node['classList'].value;
+            val['text'] = node['innerText']
+            embed['caption'] = val;
+            return new Delta().insert(embed);
+        }
+        return delta;
+    });*/
+
+    //create new image blot so that we can insert and id into the image html tag
+    registerImageBlotToQuill();
+    registerCaptionBlotToQuill();
+}
+
+
+function registerImageBlotToQuill() {
+    var BlockEmbed = Quill.import('blots/block/embed');
+    class ImageBlot extends BlockEmbed {
+        static create(data) {
+            const node = super.create(data);
+            node.setAttribute('src', data.src);
+            node.setAttribute('id', data.id);
+            node.setAttribute('class', data.class)
+            return node;
+        }
+        static value(node) {
+            return {
+                src: node.src,
+                id: node.id,
+                class: node.getAttribute('class')
+            }
+        }
+    }
+    ImageBlot.blotName = 'image';
+    ImageBlot.tagName = 'img';
+    Quill.register({ 'formats/image': ImageBlot });
+}
+
+function registerCaptionBlotToQuill() {
+    var BlockEmbed = Quill.import('blots/block/embed');
+    class CaptionBlot extends BlockEmbed {
+        static create(value) {
+            let node = super.create();
+            node.setAttribute('id', value.id);
+            node.setAttribute('class', value.class);
+            node.innerText = value.text;
+            return node;
+        }
+        static value(node) {
+            return {
+                id: node.id,
+                class: node.classList.value,
+                text: node.innerText
+            };
+        }
+    }
+    CaptionBlot.blotName = 'caption';
+    CaptionBlot.tagName = 'p';
+    CaptionBlot.className = 'quill-editor-caption';
+    Quill.register({'formats/caption': CaptionBlot});
+}
+
+/*
+    function called when the image icon button is pressed in the text editor
+*/
+function imageButtonHandler() {
+    //set the current cursor location
+    if (quillEditor !== undefined) {
+        cursorLocation = quillEditor.getSelection();
+    }
+    //open the modal to pick the image
+    $('#add-image-to-description-modal').modal({});
+}
+
+function getHtmlFromEditor() {
+    let html = quillEditor.root.innerHTML;
+    return html;
+}
+
+function sanitizeForDatabase(html) {
+    //replace images and captions with just the image id
+    html = removeImagesFromHtml(html);
+    //replace tabs with 4 spaces so they actually show up
+    html = html.replace(/\t/, "&nbsp;&nbsp;&nbsp;&nbsp;");
+    //replace double quotes with single quotes
+    html = html.replace(/"/g, "'");
+    return html;
+}
+
+function removeImagesFromHtml(html) {
+    if (existingMedia != undefined) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        for (var key in existingMedia) {
+            var imgElem = doc.getElementById(existingMedia[key].id);
+            var pElem = doc.getElementById("caption_" + existingMedia[key].id);
+            if (imgElem !== null) {
+                imgElem.removeAttribute('src');
+                imgElem.removeAttribute('style');
+            }
+            var body = doc.querySelector('body');
+            if (pElem !== null) {
+                if (body !== null) {
+                    body.removeChild(pElem);
+                }
+            }
+        }
+        if (body !== null) {
+            return body.innerHTML;
+        }
+    }
+    return html;
+}
+
+function removeMediaFromDescription(name) {
+    //get the media
+    let media = addedMedia[name];
+    //get the html from description
+    if (quillEditor != undefined) {
+        var html = getHtmlFromEditor();
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        //determine if the media being removed is in the description
+        var imgElem = doc.getElementById(media.id);
+        var pElem = doc.getElementById("caption_" + media.id);
+
+        if (imgElem != null) {
+            imgElem.remove();
+        }
+        if (pElem != null) {
+            pElem.remove()
+        }
+
+        var body = doc.querySelector('body');
+        if (body != null) {
+            html = body.innerHTML;
+            const delta = quillEditor.clipboard.convert(html);
+            quillEditor.setContents(delta);
+        }
+    }
+}
+
+function removeMediaFromDescriptionSelector(name) {
+    var select = document.getElementById('existing-media-for-description');
+    if (select !== null) {
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === name) {
+                select.remove(i);
+            }
+            else if (select.options[i].id === 'select-media-default') {
+                select.options[i].selected = true;
+            }
+        }
+    }
+}
+
