@@ -503,6 +503,12 @@ window.addEventListener("load", function () {
             // restore default for the select existing media dropdown
             document.getElementById("select-media-default").selected = true;
             $('#add-media-popup').modal('hide');
+
+            // make an option in the add media to stop description
+            var existingMediaForDescription = document.getElementById("existing-media-for-description");
+            var option = document.createElement('option');
+            option.text = option.value = selectedMedia;
+            existingMediaForDescription.add(option);
         }
     });
 
@@ -521,10 +527,11 @@ window.addEventListener("load", function () {
         var selectedRow = document.querySelector('#stop-media > .bg-info');
         var name = selectedRow.cells[1].innerHTML;
         tableBody.removeChild(selectedRow);
+        //remove media from description
         removeMediaFromDescription(name);
+        //remove media from media for description selector
+        removeMediaFromDescriptionSelector(name);
         delete addedMedia[name];
-
-        //max remove media from tour description
     });
 
     // move an item up in the table
@@ -598,10 +605,10 @@ window.addEventListener("load", function () {
                  option.selected = true; // the newly created media should be selected
                  existingMediaSelect.add(option);
                  // make an option in the add media to stop description
-                 var existingMediaForDescription = document.getElementById("existing-media-for-description");
+                 /*var existingMediaForDescription = document.getElementById("existing-media-for-description");
                  var option = document.createElement('option');
                  option.text = option.value = titleValue;
-                 existingMediaForDescription.add(option);
+                 existingMediaForDescription.add(option);*/
                  // make an option in the edit media modal's dropdown
                  var editMediaSelect = document.getElementById("edit-existing-media");
                  var option = document.createElement('option');
@@ -1249,6 +1256,19 @@ function removeMediaFromDescription(name) {
             quillEditor.setContents(delta);
         }
     }
-    
+}
+
+function removeMediaFromDescriptionSelector(name) {
+    var select = document.getElementById('existing-media-for-description');
+    if (select !== null) {
+        for (var i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === name) {
+                select.remove(i);
+            }
+            else if (select.options[i].id === 'select-media-default') {
+                select.options[i].selected = true;
+            }
+        }
+    }
 }
 
