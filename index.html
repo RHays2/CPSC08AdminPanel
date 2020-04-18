@@ -184,11 +184,35 @@ Admin Panel Web App -->
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-lg-4">
+                            <div class="col-lg-3.5">
                                 <label for="tour-preview-image">Preview Image:</label>
                             </div>
                             <div class="col-lg-1">
-                                <input type="file" name="tour-preview-image" accept="image/*,video/*" id="tour-preview-image"> <!--  onchange="loadFile(event)"> <!-- TODO: separate onchange function with modal preview -->
+                                <input type="file" name="tour-preview-image" accept="image/*" id="tour-preview-image" onchange="loadPreview(event)">
+                            </div>
+                            <!--modal for viewing the preview image-->
+                        </div>
+                        <div class="row">
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#preview-image-popup" id="view-tour-preview" type="button">View Preview Image</button>
+                            <div class="modal fade" id="preview-image-popup"  tabindex="-1" role="dialog" aria-labelledby="preview-image-modal-title" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="preview-image-modal-title"></h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                                </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row justify-content-center mt-1">
+                                                <img id="preview-image-preview" src="" height="250px" width="400px">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button class="btn btn-primary" id="close-view-preview" type="button" data-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -402,7 +426,7 @@ Admin Panel Web App -->
                             </div>
                         </div>
 
-                        <!--modal for changing the caption on a media item for a particular stop-->
+                        <!--modal for vewing the caption and media item from the table for a stop-->
                         <div class="modal fade" id="media-table-popup"  tabindex="-1" role="dialog" aria-labelledby="media-table-modal-title" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
                                 <div class="modal-content">
@@ -417,7 +441,8 @@ Admin Panel Web App -->
                                             <label class="caption" for="media-pop-up-caption">Media Caption:</label>
                                         </div>
                                         <div class="row justify-content-center">
-                                            <textarea rows="3" cols="50" name="media-pop-up-caption" class="caption" id="media-pop-up-caption"></textarea>
+                                            <!--<textarea rows="3" cols="50" name="media-pop-up-caption" class="caption" id="media-pop-up-caption"></textarea>-->
+                                            <p id="media-pop-up-caption"></p>
                                         </div>
                                         <div class="row justify-content-center mt-1">
                                             <img id="media-pop-up-preview" src="" height="250px" width="400px">
@@ -502,14 +527,14 @@ Admin Panel Web App -->
                             <label class="description" for="editor">Stop Description:</label>
                         </div>
                     </div>
-                    <!-- 
+                    <!--
                         this is the Rich text editor and the modal that allows a user to insert media into a description
                      -->
                     <div class="col-lg-12">
-                        <div id="editor"></div> 
+                        <div id="editor"></div>
                         <div class="modal fade" id="add-image-to-description-modal"  tabindex="-1" role="dialog" aria-labelledby="add-media-modal-title" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content"> 
+                                <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title" id="add-media-modal-title-for-description">Add media to the stop description</h5>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -551,13 +576,6 @@ Admin Panel Web App -->
                                 </div>
                             </div>
                         </div>
-                        <!-- The original design had a description, which we are texting removing-->
-                        <!--<div class="row">
-                            <label class="description" for="media-description">Media Description:</label>
-                        </div>
-                        <div class="row">
-                            <textarea rows="7" cols="50" name="media-description" class="description" id="media-description"></textarea>
-                        </div>-->
                         <div class="row">
                             <label class="caption" for="media-caption">Media Caption:</label>
                         </div>
@@ -567,7 +585,7 @@ Admin Panel Web App -->
                     </div>
                     <div class="col-lg-6">
                         <div class="row mt-1">
-                            <input type="file" name="media-item" accept="image/*,video/*" id="media-item" onchange="loadFile(event)">
+                            <input type="file" name="media-item" accept="image/*,video/*" id="media-item" onchange="loadMedia(event)">
                         </div>
                         <div class="row mt-2">
                             <img id="media-preview" src="" height="250px" width="400px"> <!--TODO: use a size that reflects what it will look like on mobile-->

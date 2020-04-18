@@ -83,6 +83,7 @@ window.addEventListener("load", function () {
             document.getElementById("tour-title").value = selectedTour;
             document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
             document.getElementById("admin-only").value = existingTours[selectedTour]["visibility"];
+            document.getElementById("preview-image-preview").src = existingTours[selectedTour]["preview"];
 
             // add stops back to the table
             var existingStops = existingTours[selectedTour]["stops"]
@@ -211,10 +212,11 @@ window.addEventListener("load", function () {
     $('#save-tour').click(function(e) {
         e.preventDefault();
         var title = document.getElementById("tour-title");
-        var description = document.getElementById("tour-description")
+        var description = document.getElementById("tour-description");
+        var preview = document.getElementById("preview-image-preview");
         var titleValue = title.value;
         var descriptionValue = description.value;
-
+        var src = preview.src.substring(preview.src.length - 10);
         var stopTable = document.getElementById("tour-stops")
         numRows = stopTable.rows.length;
 
@@ -224,15 +226,24 @@ window.addEventListener("load", function () {
         if (!titleValue) { // there must be a title
             $("#tour-title").popover('dispose');
             $("#tour-title").popover({ title: 'Error', content: "Title required"});
-            $("#tour-title").click();
+            $("#tour-title").popover('show');
         } else if (Object.keys(existingTours).includes(titleValue) && !editMode) { // title must be unique unless in editMode
-            $("tour-title").popover('dispose');
+            $("#tour-title").popover('dispose');
             $("#tour-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#tour-title").click();
+            $("#tour-title").popover('show');
+        } else if (src == "index.html") {
+            $("#tour-preview-image").popover('dispose');
+            $("#tour-preview-image").popover({ title: 'Error', content: "Tour must have a preview image.", placement: "bottom"});
+            $("#tour-preview-image").popover('show');
         } else {
             // save the tour
             var visibility = document.getElementById("admin-only").value;
-            existingTours[titleValue] = {"description": descriptionValue, "stops": addedStops, "visibility" : visibility};
+            existingTours[titleValue] = {
+                "description": descriptionValue,
+                "stops": addedStops,
+                "visibility" : visibility,
+                "preview": preview.src
+            };
 
             if (editMode) {
                 editMode = false;
@@ -245,24 +256,22 @@ window.addEventListener("load", function () {
                 option.text = option.value = titleValue;
                 editTourSelect.add(option);
 
-                // TODO: require image
                 var file = document.getElementById('tour-preview-image').files[0];
-                if (file) { // if there is an image, upload it
-                    var name = file.name;
-                    var lastDot = name.lastIndexOf('.');
-                    var extension = name.substring(lastDot + 1);
+                var name = file.name;
+                var lastDot = name.lastIndexOf('.');
+                var extension = name.substring(lastDot);
+                var fileName = titleValue + extension;
 
-                    // Create a root reference
-                    var storageRef = firebase.storage().ref();
-                    var fileName = titleValue + "." + extension;
-                    console.log(fileName);
-                    var fileLoc = 'images/' + fileName;
-                    // create a child for the new file
-                    var spaceRef = storageRef.child(fileLoc);
-                    spaceRef.put(file).then(function(snapshot) {
-                        console.log('Uploaded!');
-                    });
-                }
+                // Create a root reference
+                var storageRef = firebase.storage().ref();
+
+                console.log(fileName);
+                var fileLoc = 'images/' + fileName;
+                // create a child for the new file
+                var spaceRef = storageRef.child(fileLoc);
+                spaceRef.put(file).then(function(snapshot) {
+                    console.log('Uploaded!');
+                });
 
                 // TODO: upload entire tour
                 var databaseRef = firebase.database().ref();
@@ -271,32 +280,27 @@ window.addEventListener("load", function () {
                 //get reference to database for assets
                 var assetsRef = databaseRef.child("assets");
 
-                
-                /*toursRef.push({
-
-                });*/
                 var newTourRef = toursRef.push({
                     description: descriptionValue,
                     length: numRows,
                     name: titleValue,
                     preview_image: fileName
-                  })
+                });
 
-
-                //saving all of the stop informations to the tour
-                 //first gets a reference to the tour database key
-                 let tourId = newTourRef.key
+                 // saving all of the stop informations to the tour
+                 // first gets a reference to the tour database key
+                 let tourId = newTourRef.key;
                  var stop;
                  //iterating through the stops
-                 for(stop of Object.keys(addedStops)){
+                 for (stop of Object.keys(addedStops)) {
                     //pushes to the database the tour object
                     var newStopRef = stopsRef.child(tourId).push({
-                    description: sanitizeForDatabase(addedStops[stop]["description"]),
-                    lat: addedStops[stop]["location"]["lat"],
-                    lng: addedStops[stop]["location"]["lng"],
-                    name: addedStops[stop]["title"],
-                    id: stop,
-                    stop_order: addedStops[stop]["stop_order"]
+                        description: sanitizeForDatabase(addedStops[stop]["description"]),
+                        lat: addedStops[stop]["location"]["lat"],
+                        lng: addedStops[stop]["location"]["lng"],
+                        name: addedStops[stop]["title"],
+                        id: stop,
+                        stop_order: addedStops[stop]["stop_order"]
                     })
 
                     //adding the stops from the tour
@@ -305,7 +309,7 @@ window.addEventListener("load", function () {
                     var asset;
                     console.log(stopId);
 
-                    for(asset of Object.keys(newAddedMedia)){
+                    for(asset of Object.keys(newAddedMedia)) {
                         console.log("asset", asset);
                         var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
                             description: newAddedMedia[asset]["caption"],
@@ -314,7 +318,7 @@ window.addEventListener("load", function () {
                         });
                     }
 
-                        
+
                 }
             }
             clearTourFields();
@@ -551,25 +555,26 @@ window.addEventListener("load", function () {
         e.preventDefault();
 
         var title = document.getElementById("media-title");
-        // var description = document.getElementById("media-description");
         var caption = document.getElementById("media-caption");
+        var preview = document.getElementById('media-preview');
         var titleValue = title.value;
-        // var descriptionValue = description.value;
         var captionValue = caption.value;
+        var src = preview.src.substring(preview.src.length - 10);
         if (!titleValue) { // there must be a title
             $("#media-title").popover('dispose');
             $("#media-title").popover({ title: 'Error', content: "Title required"});
-            $("#media-title").click();
+            $("#media-title").popover('show');
         } else if (Object.keys(existingMedia).includes(titleValue) && !editMode) { // title must be unique
             $("#media-title").popover('dispose');
             $("#media-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#media-title").click();
+            $("#media-title").popover('show');
+        } else if (src ==="index.html") {
+            $("#media-item").popover('dispose');
+            $("#media-item").popover({ title: 'Error', content: "Image or Video required", placement: "bottom"});
+            $("#media-item").popover('show');
         } else {
             // save the media item
-            var preview = document.getElementById('media-preview');
-            // existingMedia[titleValue] = {"description": descriptionValue, "media-item": preview.src, "caption":captionValue}; // TODO: add image
             existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": uuidv4()};
-            console.log(existingMedia);
 
             if (startEdit == "media") { // we were editing the item
                 $('#nav-pills a[href="#home-page"]').tab('show');
@@ -582,7 +587,7 @@ window.addEventListener("load", function () {
                     var name = file.name;
                     var lastDot = name.lastIndexOf('.');
                     var extension = name.substring(lastDot + 1);
-                   
+
                     // Create a root reference
                     var storageRef = firebase.storage().ref();
                     var fileName = titleValue + "." + extension;
@@ -596,7 +601,7 @@ window.addEventListener("load", function () {
                         console.log('Uploaded!');
                     });
 
-                    
+
                 }
                  // make an option in the add media modal's dropdown
                  var existingMediaSelect = document.getElementById("existing-media");
@@ -629,7 +634,11 @@ window.addEventListener("load", function () {
     // Remove the warning next time the media-title box is clicked
     $('#media-title').on('input', function() {
         $("#media-title").popover('dispose');
-    }); 
+    });
+
+    $('#media-item').on('input', function() {
+        $("#media-item").popover('dispose');
+    });
 
     $('#confirm-add-media-to-description').click(function() {
         var existingMediaSelect = document.getElementById("existing-media-for-description");
@@ -638,7 +647,7 @@ window.addEventListener("load", function () {
             let src = existingMedia[selectedMedia]['media-item'];
             let caption = existingMedia[selectedMedia]['caption'];
             let id = existingMedia[selectedMedia]['id'];
-            
+
             //add the image at the cursor location
             if (quillEditor !== undefined) {
                 //get cursor location
@@ -683,6 +692,7 @@ function removeHomeWarnings() {
 function removeTourWarnings() {
     $("#existing-stops").popover('dispose');
     $("#tour-title").popover('dispose');
+    $("#tour-preview-image").popover('dispose');
 }
 
 function removeStopWarnings() {
@@ -694,6 +704,7 @@ function removeStopWarnings() {
 
 function removeMediaWarnings() {
     $("#media-title").popover('dispose');
+    $("#media-item").popover('dispose');
 }
 
 // MARK: functions to sort table items
@@ -814,9 +825,33 @@ function clearTourFields() {
     preview.value = "";
 }
 
-// trigger by onchange on the html element media-item
-function loadFile(e) {
+// triggered by onchange on the html element media-item
+function loadMedia(e) {
     var preview = document.getElementById('media-preview');
+    var imgURL = URL.createObjectURL(e.target.files[0]);
+    var img = new Image();
+    img.src = imgURL
+    // change orientation (simplified)
+    // TODO: show images at a reasonable size proportional
+    // to their original size
+    img.onload = function() {
+        if (img.height > img.width) { // portrait
+            preview.width = "300";
+            preview.height = "350";
+        } else if (img.height < img.width) { // landscape
+            preview.width = "400";
+            preview.height = "250";
+        } else { // square
+            preview.width = "300";
+            preview.height = "300";
+        }
+    };
+    preview.src = imgURL;
+}
+
+// triggered by onchange on the html element tour-preview-image
+function loadPreview(e) {
+    var preview = document.getElementById('preview-image-preview');
     var imgURL = URL.createObjectURL(e.target.files[0]);
     var img = new Image();
     img.src = imgURL
@@ -1069,7 +1104,7 @@ function initializeQuillEditor() {
     let ColorStyle = Quill.import('attributors/style/color')
     let DirectionStyle = Quill.import('attributors/style/direction')
     let FontStyle = Quill.import('attributors/style/font')
-    var SizeStyle = Quill.import('attributors/style/size');  
+    var SizeStyle = Quill.import('attributors/style/size');
     delete SizeStyle.whitelist;
 
     Quill.register(AlignStyle, true);
@@ -1271,4 +1306,3 @@ function removeMediaFromDescriptionSelector(name) {
         }
     }
 }
-
