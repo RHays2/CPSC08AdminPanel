@@ -76,7 +76,7 @@ window.addEventListener("load", function () {
         if (selectedTour === "") {
             $("#edit-existing-tour").popover('dispose');
             $("#edit-existing-tour").popover({ title: 'Error', content: "Please select a tour to edit"});
-            $("#edit-existing-tour").click(); // bring up the popover
+            $("#edit-existing-tour").popover('show'); // bring up the popover
         } else {
             clearTourFields();
 
@@ -127,7 +127,7 @@ window.addEventListener("load", function () {
         if (selectedStop === "") {
             $("#edit-existing-stop").popover('dispose');
             $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
-            $("#edit-existing-stop").click(); // bring up the popover
+            $("#edit-existing-stop").popover('show'); // bring up the popover
         } else {
             clearStopFields();
             document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
@@ -173,7 +173,7 @@ window.addEventListener("load", function () {
         if (selectedMedia === "") {
             $("edit-existing-media").popover('dispose');
             $("#edit-existing-media").popover({ title: 'Error', content: "Please select a media item to edit"});
-            $("#edit-existing-media").click(); // bring up the popover
+            $("#edit-existing-media").popover('show'); // bring up the popover
         } else {
             clearMediaFields();
             document.getElementById("media-title").value = selectedMedia;
@@ -337,10 +337,14 @@ window.addEventListener("load", function () {
     $('#confirm-add-stop').click(function() {
         var existingStopSelect = document.getElementById("existing-stops");
         var selectedStop = existingStopSelect.value;
-        if (Object.keys(addedStops).includes(selectedStop)) { // this media item is already added to the stop
+        if (!selectedStop) {
+            $("#existing-stops").popover('dispose');
+            $("#existing-stops").popover({ title: 'Error', content: "Select a stop to add to the tour"});
+            $("#existing-stops").popover('show'); // bring up the popover
+        } else if (Object.keys(addedStops).includes(selectedStop)) { // this media item is already added to the stop
             $("#existing-stops").popover('dispose');
             $("#existing-stops").popover({ title: 'Error', content: "This stop was already added to the tour"});
-            $("#existing-stops").click(); // bring up the popover
+            $("#existing-stops").popover('show'); // bring up the popover
         } else {
             updateStopTable(selectedStop);
             // restore default for the select existing media dropdown
@@ -424,21 +428,21 @@ window.addEventListener("load", function () {
         if (!titleValue) { // there must be a title
             $("#stop-title").popover('dispose');
             $("#stop-title").popover({ title: 'Error', content: "Title required"});
-            $("#stop-title").click();
+            $("#stop-title").popover('show');
         } else if (!idValue) {
             $("#stop-id").popover('dispose');
             $("#stop-id").popover({ title: 'Error', content: "id required"});
-            $("#stop-id").click();
+            $("#stop-id").popover('show');
         } else if (Object.keys(existingStops).includes(idValue) && !editMode) { // title must be unique unless in edit mode
             $("#stop-id").popover('dispose');
             $("#stop-id").popover({ title: 'Error', content: "Id must be unique"});
-            $("#stop-id").click();
+            $("#stop-id").popover('show');
         } else if (!selectedLocation) { // there must be a location
             $("#stop-map").popover('dispose');
             $("#stop-map").popover({ title: 'Error',
                                     content: "A location must be selected",
                                     offset: "85"});
-            $("#stop-map").click();
+            $("#stop-map").popover('show');
         } else {
             // save the stop
             existingStops[idValue] = { // here max  creating the object inc the description
@@ -498,10 +502,14 @@ window.addEventListener("load", function () {
     $('#confirm-add-media').click(function() {
         var existingMediaSelect = document.getElementById("existing-media");
         var selectedMedia = existingMediaSelect.value;
-        if (Object.keys(addedMedia).includes(selectedMedia)) { // this media item is already added to the stop
+        if (!selectedMedia) {
+            $("#existing-media").popover('dispose');
+            $("#existing-media").popover({ title: 'Error', content: "Select media to add to the tour"});
+            $("#existing-media").popover('show'); // bring up the popover
+        } else if (Object.keys(addedMedia).includes(selectedMedia)) { // this media item is already added to the stop
             $("#existing-media").popover('dispose');
             $("#existing-media").popover({ title: 'Error', content: "This media was already added to the stop"});
-            $("#existing-media").click(); // bring up the popover
+            $("#existing-media").popover('show'); // bring up the popover
         } else {
             updateMediaTable(selectedMedia, true);
             // restore default for the select existing media dropdown
