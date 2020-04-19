@@ -41,6 +41,108 @@ window.addEventListener("load", function () {
 
     firebase.initializeApp(firebaseConfig);
 
+    var tempTours;
+    var tempStops;
+    var tempMedia;
+
+    //read the existing items and populate the edit drop downs
+    firebase.database().ref('tours').once('value').then(function(snapshot) {
+        var tempTours = (snapshot.val());
+        // console.log("tempTours", tempTours);
+        firebase.database().ref('stops').once('value').then(function(snapshot) {
+            var tempStops = (snapshot.val());
+            // console.log("tempStops", tempStops);
+            firebase.database().ref('assets').once('value').then(function(snapshot) {
+                var tempMedia = (snapshot.val());
+                // console.log("tempMedia", tempMedia);
+
+                for (tour of Object.keys(tempTours)) {
+                  var stopItems = {};
+
+                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                        var mediaItems = {};
+                        var idValue = tempStops[tour][stop]["id"]
+                        if (tempMedia[stop] !== undefined) { // if the stop has media
+                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                var name = tempMedia[stop][media]["name"];
+                                mediaItems[name] = {
+                                    "caption" : tempMedia[stop][media]["description"],
+                                    "id": media,
+                                    "stopID": stop,
+                                    "storage_name": tempMedia[stop][media]["storage_name"]
+                                }
+                                existingMedia[name] = mediaItems[name];
+                                // // make an option in the add media modal's dropdown
+                                // var existingMediaSelect = document.getElementById("existing-media");
+                                // var option = document.createElement('option');
+                                // option.text = option.value = name;
+                                // existingMediaSelect.add(option);
+
+                                // make an option in the edit media modal's dropdown
+                                var editMediaSelect = document.getElementById("edit-existing-media");
+                                var option = document.createElement('option');
+                                option.text = option.value = name;
+                                editMediaSelect.add(option)
+                            }
+                            // create stop object for stop existing stops and dropdowns
+
+                            stopItems[idValue] = {
+                                "description": tempStops[tour][stop]["description"],
+                                "media": mediaItems,
+                                "location": {
+                                    lat: tempStops[tour][stop]["lat"],
+                                    lng: tempStops[tour][stop]["lng"]
+                                },
+                                "id": idValue,
+                                "databaseID": stop,
+                                "tourID": tour,
+                                "title": tempStops[tour][stop]["name"],
+                                "stop_order": tempStops[tour][stop]["stop_order"]
+                            }
+                        } else {
+                            stopItems[idValue] = {
+                                "description": tempStops[tour][stop]["description"],
+                                "media": {},
+                                "location": {
+                                    lat: tempStops[tour][stop]["lat"],
+                                    lng: tempStops[tour][stop]["lng"]
+                                },
+                                "id": idValue,
+                                "databaseID": stop,
+                                "title": tempStops[tour][stop]["name"],
+                                "stop_order": tempStops[tour][stop]["stop_order"]
+                            }
+                        }
+                        existingStops[idValue] = stopItems[idValue];
+                        // make an option in the add stop modal's dropdown
+                        // var existingMediaSelect = document.getElementById("existing-stops");
+                        // var option = document.createElement('option');
+                        // option.text = option.value = tempStops[tour][stop]["id"];
+                        // option.selected = true; // the newly created stop should be selected
+                        // existingMediaSelect.add(option);
+                        // make an option in the edit stop modal's dropdown
+                        var editStopSelect = document.getElementById("edit-existing-stop");
+                        var option = document.createElement('option');
+                        option.text = option.value = tempStops[tour][stop]["id"];
+                        editStopSelect.add(option);
+                    }
+                    var name = tempTours[tour]["name"];
+                    existingTours[name] = {
+                        "description": tempTours[tour]["description"],
+                        "stops": stopItems,
+                        "isAdminOnly" : tempTours[tour]["admin_only"],
+                        "storage_name": tempTours[tour]["preview_image"],
+                        "databaseID": tour
+                    }
+                    // make an option in the edit tour modal's dropdown
+                    var editTourSelect = document.getElementById("edit-existing-tour");
+                    var option = document.createElement('option');
+                    option.text = option.value = name;
+                    editTourSelect.add(option);
+                }
+            });
+        });
+    });
 
 
     // MARK: tab close event listeners
@@ -82,8 +184,17 @@ window.addEventListener("load", function () {
 
             document.getElementById("tour-title").value = selectedTour;
             document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
-            document.getElementById("admin-only").value = existingTours[selectedTour]["visibility"];
-            document.getElementById("preview-image-preview").src = existingTours[selectedTour]["preview"];
+            document.getElementById("admin-only").value = existingTours[selectedTour]["isAdminOnly"];
+
+            var preview_image = document.getElementById("preview-image-preview");
+            if (!existingTours[selectedTour]["preview"]) {
+                getImageNamed(existingTours[selectedTour]["storage_name"], function(url) {
+                    preview_image.src = setImageOrientation(url, preview_image);
+                    existingTours[selectedTour]["preview"] = url;
+                });
+            } else {
+                preview_image.src = setImageOrientation(existingTours[selectedTour]["preview"], preview_image);
+            }
 
             // add stops back to the table
             var existingStops = existingTours[selectedTour]["stops"]
@@ -131,6 +242,7 @@ window.addEventListener("load", function () {
         } else {
             clearStopFields();
             document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
+            var existingMediaForDescription = document.getElementById("existing-media-for-description");
             // here max  reenter saved description
             const delta = quillEditor.clipboard.convert(existingStops[selectedStop]["description"]);
             quillEditor.setContents(delta);
@@ -139,13 +251,32 @@ window.addEventListener("load", function () {
             // add media back to the table
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(addedMedia);
-            for (var i = 1; i <= mediaItems.length; i++) {
-                for (var j = 0; j < mediaItems.length; j++) {
-                    if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
-                        updateMediaTable(mediaItems[j], false);
-                    }
-                }
+
+            // The following commented out code adds media items based on their order
+            // for (var i = 1; i <= mediaItems.length; i++) {
+            //     for (var j = 0; j < mediaItems.length; j++) {
+            //         if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
+            //             updateMediaTable(mediaItems[j], false);
+            //         }
+            //         //add media as options to the existing-media-for-description selector
+            //         var option = document.createElement('option');
+            //         option.text = option.value = mediaItems[j];
+            //         existingMediaForDescription.add(option);
+            //         //updateMediaTable(mediaItems[j], false);
+            //         updateMediaObj(mediaItems[j],addedMedia[mediaItems[j]]["storage_name"]);
+            //     }
+            // }
+
+
+            for (var j = 0; j < mediaItems.length; j++) {
+                //add media as options to the existing-media-for-description selector
+                var option = document.createElement('option');
+                option.text = option.value = mediaItems[j];
+                existingMediaForDescription.add(option);
+                //updateMediaTable(mediaItems[j], false);
+                updateMediaObj(mediaItems[j],addedMedia[mediaItems[j]]["storage_name"]);
             }
+
 
             $('#edit-which-stop').modal('hide');
             $('#nav-pills a[href="#stop-page"]').tab('show');
@@ -155,6 +286,14 @@ window.addEventListener("load", function () {
             startEdit = "stop";
         }
     });
+
+    function updateMediaObj(mediaName, storageName) {
+      getImageNamed(addedMedia[mediaName]["storage_name"], function(url){
+        addedMedia[mediaName]["media-item"] = url;
+        existingMedia[mediaName]["media-item"] = url;
+        updateMediaTable(mediaName, false);
+      });
+    }
 
     // Remove the warning next time the edit-existing-stop dropdown box is changed
     $('#edit-existing-stop').on('change', function() {
@@ -179,7 +318,18 @@ window.addEventListener("load", function () {
             document.getElementById("media-title").value = selectedMedia;
             console.log(document.getElementById("media-title").value);
             // document.getElementById("media-description").value = existingMedia[selectedMedia]["description"];
-            document.getElementById("media-preview").src = existingMedia[selectedMedia]["media-item"];
+
+            var preview_image = document.getElementById("media-preview");
+            if (!existingMedia[selectedMedia]["media-item"]) {
+                getImageNamed(existingMedia[selectedMedia]["storage_name"], function(url) {
+                    preview_image.src = setImageOrientation(url, preview_image);
+                    existingMedia[selectedMedia]["media-item"] = url;
+                });
+            } else {
+                preview_image.src = setImageOrientation(existingMedia[selectedMedia]["media-item"], preview_image);
+            }
+
+
             document.getElementById("media-caption").value = existingMedia[selectedMedia]["caption"];
             $('#edit-which-media').modal('hide');
             $('#nav-pills a[href="#media-page"]').tab('show');
@@ -237,11 +387,11 @@ window.addEventListener("load", function () {
             $("#tour-preview-image").popover('show');
         } else {
             // save the tour
-            var visibility = document.getElementById("admin-only").value;
+            var isAdminOnly = document.getElementById("admin-only").value;
             existingTours[titleValue] = {
                 "description": descriptionValue,
                 "stops": addedStops,
-                "visibility" : visibility,
+                "isAdminOnly" : isAdminOnly,
                 "preview": preview.src
             };
 
@@ -279,13 +429,25 @@ window.addEventListener("load", function () {
                 var stopsRef = databaseRef.child("stops");
                 //get reference to database for assets
                 var assetsRef = databaseRef.child("assets");
+                var adminOnlyRef = databaseRef.child("admin_only_tour");
 
-                var newTourRef = toursRef.push({
-                    description: descriptionValue,
-                    length: numRows,
-                    name: titleValue,
-                    preview_image: fileName
-                });
+                var newTourRef;
+                if (isAdminOnly) {
+                    newTourRef  = adminOnlyRef.push({
+                        description: descriptionValue,
+                        length: numRows,
+                        name: titleValue,
+                        preview_image: fileName
+                    });
+                } else {
+                    newTourRef = toursRef.push({
+                        description: descriptionValue,
+                        length: numRows,
+                        name: titleValue,
+                        preview_image: fileName
+                    });
+                }
+
 
                  // saving all of the stop informations to the tour
                  // first gets a reference to the tour database key
@@ -314,7 +476,7 @@ window.addEventListener("load", function () {
                         var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
                             description: newAddedMedia[asset]["caption"],
                             name: asset,
-                            storage_name: newAddedMedia[asset]["file_name"]
+                            storage_name: newAddedMedia[asset]["storage_name"]
                         });
                     }
 
@@ -368,7 +530,27 @@ window.addEventListener("load", function () {
         var selectedRow = document.querySelector('#tour-stops > .bg-info');
         var name = selectedRow.cells[1].innerHTML;
         tableBody.removeChild(selectedRow);
+        var removedStopOrder = addedStops[name]["stop_order"];
         delete addedStops[name];
+
+        // readjust the "media_order" in addedMedia
+        for (stop of Object.keys(addedStops)) {
+            if (addedStops[stop]["stop_order"] > removedStopOrder) {
+                addedStops[stop]["stop_order"] = addedStops[stop]["stop_order"] - 1;
+            }
+        }
+
+        // readd items to the table in order
+        stopTableBody = document.getElementById("tour-stops");
+        stopTableBody.innerHTML = "";
+        var stops = Object.keys(addedStops);
+        for (var i = 1; i <= stops.length; i++) {
+            for (var j = 0; j < stops.length; j++) {
+                if (addedStops[stops[j]]["stop_order"]===i) { // add items in order 1+
+                    updateStopTable(stops[j]);
+                }
+            }
+        }
     });
 
     // move an item up in the table
@@ -543,7 +725,28 @@ window.addEventListener("load", function () {
         removeMediaFromDescription(name);
         //remove media from media for description selector
         removeMediaFromDescriptionSelector(name);
+        var removedMediaOrder = addedMedia[name]["media_order"];
         delete addedMedia[name];
+
+
+        // readjust the "media_order" in addedMedia
+        for (media of Object.keys(addedMedia)) {
+            if (addedMedia[media]["media_order"] > removedMediaOrder) {
+                addedMedia[media]["media_order"] = addedMedia[media]["media_order"] - 1;
+            }
+        }
+
+        // readd items to the table in order
+        mediaTableBody = document.getElementById("stop-media");
+        mediaTableBody.innerHTML = "";
+        var mediaItems = Object.keys(addedMedia);
+        for (var i = 1; i <= mediaItems.length; i++) {
+            for (var j = 0; j < mediaItems.length; j++) {
+                if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
+                    updateMediaTable(mediaItems[j], false);
+                }
+            }
+        }
     });
 
     // move an item up in the table
@@ -581,35 +784,60 @@ window.addEventListener("load", function () {
             $("#media-item").popover({ title: 'Error', content: "Image or Video required", placement: "bottom"});
             $("#media-item").popover('show');
         } else {
-            // save the media item
-            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": uuidv4()};
-
             if (startEdit == "media") { // we were editing the item
-                $('#nav-pills a[href="#home-page"]').tab('show');
-                editMode = true;
-                startEdit = undefined;
-            } else { // we are creating a new item
+                var assetId = existingMedia[titleValue]["id"];
+                var stopId = existingMedia[titleValue]["stopID"];
+                var assetRef = firebase.database().ref().child("assets");
+
                 var file = document.getElementById('media-item').files[0];
                 if (file) { // if there is an image, upload it
-
                     var name = file.name;
                     var lastDot = name.lastIndexOf('.');
                     var extension = name.substring(lastDot + 1);
 
+                    // upload the image
                     // Create a root reference
                     var storageRef = firebase.storage().ref();
                     var fileName = titleValue + "." + extension;
-                    existingMedia[titleValue]["file_name"] = fileName;
-                    console.log(fileName);
+                    existingMedia[titleValue]["storage_name"] = fileName;
                     var fileLoc = 'images/' + fileName;
-                    existingMedia[titleValue]["file_name"] = fileName;
                     // create a child for the new file
                     var spaceRef = storageRef.child(fileLoc);
                     spaceRef.put(file).then(function(snapshot) {
                         console.log('Uploaded!');
                     });
+                }
 
+                assetRef.child(stopId).child(assetId).set({
+                    description: captionValue,
+                    name: titleValue,
+                    storage_name: titleValue + "." + name.substring(lastDot + 1)
+                });
 
+                $('#nav-pills a[href="#home-page"]').tab('show');
+                editMode = true;
+                startEdit = undefined;
+            } else { // we are creating a new item
+                // save the media item
+                existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": uuidv4()};
+                var file = document.getElementById('media-item').files[0];
+                if (file) { // if there is an image, upload it
+                    var name = file.name;
+                    var lastDot = name.lastIndexOf('.');
+                    var extension = name.substring(lastDot + 1);
+
+                    // upload the image
+                    // Create a root reference
+                    var storageRef = firebase.storage().ref();
+                    var fileName = titleValue + "." + extension;
+                    existingMedia[titleValue]["storage_name"] = fileName;
+                    console.log(fileName);
+                    var fileLoc = 'images/' + fileName;
+                    // create a child for the new file
+                    var spaceRef = storageRef.child(fileLoc);
+                    spaceRef.put(file).then(function(snapshot) {
+                        console.log('Uploaded!');
+                    });
                 }
                  // make an option in the add media modal's dropdown
                  var existingMediaSelect = document.getElementById("existing-media");
@@ -617,11 +845,7 @@ window.addEventListener("load", function () {
                  option.text = option.value = titleValue;
                  option.selected = true; // the newly created media should be selected
                  existingMediaSelect.add(option);
-                 // make an option in the add media to stop description
-                 /*var existingMediaForDescription = document.getElementById("existing-media-for-description");
-                 var option = document.createElement('option');
-                 option.text = option.value = titleValue;
-                 existingMediaForDescription.add(option);*/
+
                  // make an option in the edit media modal's dropdown
                  var editMediaSelect = document.getElementById("edit-existing-media");
                  var option = document.createElement('option');
@@ -837,32 +1061,19 @@ function clearTourFields() {
 function loadMedia(e) {
     var preview = document.getElementById('media-preview');
     var imgURL = URL.createObjectURL(e.target.files[0]);
-    var img = new Image();
-    img.src = imgURL
-    // change orientation (simplified)
-    // TODO: show images at a reasonable size proportional
-    // to their original size
-    img.onload = function() {
-        if (img.height > img.width) { // portrait
-            preview.width = "300";
-            preview.height = "350";
-        } else if (img.height < img.width) { // landscape
-            preview.width = "400";
-            preview.height = "250";
-        } else { // square
-            preview.width = "300";
-            preview.height = "300";
-        }
-    };
-    preview.src = imgURL;
+    preview.src = setImageOrientation(imgURL, preview);
 }
 
 // triggered by onchange on the html element tour-preview-image
 function loadPreview(e) {
     var preview = document.getElementById('preview-image-preview');
     var imgURL = URL.createObjectURL(e.target.files[0]);
+    preview.src = setImageOrientation(imgURL, preview);
+}
+
+function setImageOrientation(imgURL, preview) {
     var img = new Image();
-    img.src = imgURL
+    img.src = imgURL;
     // change orientation (simplified)
     // TODO: show images at a reasonable size proportional
     // to their original size
@@ -878,7 +1089,7 @@ function loadPreview(e) {
             preview.height = "300";
         }
     };
-    preview.src = imgURL;
+    return imgURL;
 }
 
 // MARK: functions to update the tables when
@@ -936,10 +1147,10 @@ function updateMediaTable(name, userAdded) {
     cell.innerHTML = name;
 
     if (userAdded) {
-        addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name]));
+        addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name])); // avoid errors due to shallow copy
     }
     addedMedia[name]["media_order"] = numRows;
-    // row.dataset.target = '#media-table-popup'; // set data-target
+    row.dataset.target = '#media-table-popup'; // set data-target
 
     // pull up the modal when double clicked
     row.addEventListener('dblclick', function () {
@@ -953,28 +1164,23 @@ function updateMediaTable(name, userAdded) {
 
         // show the original caption
         var modalCaption = document.getElementById("media-pop-up-caption");
-        modalCaption.value = addedMedia[name]["caption"];
+        modalCaption.innerHTML = addedMedia[name]["caption"];
 
         // preview the image
         var modalImage = document.getElementById("media-pop-up-preview");
-        var img = new Image();
-        img.src = addedMedia[name]["media-item"];
-        // change orientation (simplified)
-        // TODO: show images at a reasonable size proportional
-        // to their original size
-        img.onload = function() {
-            if (img.height > img.width) { // portrait
-                modalImage.width = "300";
-                modalImage.height = "350";
-            } else if (img.height < img.width) { // landscape
-                modalImage.width = "400";
-                modalImage.height = "250";
-            } else { // square
-                modalImage.width = "300";
-                modalImage.height = "300";
-            }
-        };
-        modalImage.src = img.src;
+        modalImage.src = setImageOrientation(addedMedia[name]["media-item"], modalImage);
+
+        var modalImage = document.getElementById("media-pop-up-preview");
+        // if (!addedMedia[name]["media-item"]) {
+        //     getImageNamed(existingMedia[name]["storage_name"], function(url) {
+        //         modalImage.src = setImageOrientation(url, modalImage);
+        //         addedMedia[name]["media-item"] = url;
+        //         existingMedia[name]["media-item"] = url;
+        //     });
+        // } else {
+        modalImage.src = setImageOrientation(addedMedia[name]["media-item"], modalImage);
+        // }
+
 
         // when the confirm button is clicked, update the caption for the stop
         var confirmButton = document.getElementById("confirm-edit-caption");
@@ -1313,4 +1519,10 @@ function removeMediaFromDescriptionSelector(name) {
             }
         }
     }
+}
+
+function getImageNamed(imageName, callback) {
+  firebase.storage().ref("images/" + imageName).getDownloadURL().then(function(url) {
+    callback(url);
+  });
 }
