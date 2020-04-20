@@ -252,22 +252,6 @@ window.addEventListener("load", function () {
             addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
             var mediaItems = Object.keys(addedMedia);
 
-            // The following commented out code adds media items based on their order
-            // for (var i = 1; i <= mediaItems.length; i++) {
-            //     for (var j = 0; j < mediaItems.length; j++) {
-            //         if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
-            //             updateMediaTable(mediaItems[j], false);
-            //         }
-            //         //add media as options to the existing-media-for-description selector
-            //         var option = document.createElement('option');
-            //         option.text = option.value = mediaItems[j];
-            //         existingMediaForDescription.add(option);
-            //         //updateMediaTable(mediaItems[j], false);
-            //         updateMediaObj(mediaItems[j],addedMedia[mediaItems[j]]["storage_name"]);
-            //     }
-            // }
-
-
             for (var j = 0; j < mediaItems.length; j++) {
                 //add media as options to the existing-media-for-description selector
                 var option = document.createElement('option');
@@ -367,7 +351,9 @@ window.addEventListener("load", function () {
         var titleValue = title.value;
         var descriptionValue = description.value;
         var src = preview.src.substring(preview.src.length - 10);
-        var stopTable = document.getElementById("tour-stops")
+        var stopTable = document.getElementById("tour-stops");
+        var isAdminOnly = document.getElementById("admin-only").value;
+        isAdminOnly = (isAdminOnly === 'true');
         numRows = stopTable.rows.length;
 
         // TODO: when editing, this things there isn't a title
@@ -387,7 +373,6 @@ window.addEventListener("load", function () {
             $("#tour-preview-image").popover('show');
         } else {
             // save the tour
-            var isAdminOnly = document.getElementById("admin-only").value;
             existingTours[titleValue] = {
                 "description": descriptionValue,
                 "stops": addedStops,
@@ -533,7 +518,7 @@ window.addEventListener("load", function () {
         var removedStopOrder = addedStops[name]["stop_order"];
         delete addedStops[name];
 
-        // readjust the "media_order" in addedMedia
+        // readjust the "stop_order" in addedStops
         for (stop of Object.keys(addedStops)) {
             if (addedStops[stop]["stop_order"] > removedStopOrder) {
                 addedStops[stop]["stop_order"] = addedStops[stop]["stop_order"] - 1;
@@ -725,38 +710,10 @@ window.addEventListener("load", function () {
         removeMediaFromDescription(name);
         //remove media from media for description selector
         removeMediaFromDescriptionSelector(name);
-        var removedMediaOrder = addedMedia[name]["media_order"];
         delete addedMedia[name];
 
 
-        // readjust the "media_order" in addedMedia
-        for (media of Object.keys(addedMedia)) {
-            if (addedMedia[media]["media_order"] > removedMediaOrder) {
-                addedMedia[media]["media_order"] = addedMedia[media]["media_order"] - 1;
-            }
-        }
 
-        // readd items to the table in order
-        mediaTableBody = document.getElementById("stop-media");
-        mediaTableBody.innerHTML = "";
-        var mediaItems = Object.keys(addedMedia);
-        for (var i = 1; i <= mediaItems.length; i++) {
-            for (var j = 0; j < mediaItems.length; j++) {
-                if (addedMedia[mediaItems[j]]["media_order"]===i) { // add items in order 1+
-                    updateMediaTable(mediaItems[j], false);
-                }
-            }
-        }
-    });
-
-    // move an item up in the table
-    $('#media-up').click(function(){
-       moveTableRowUp("stop-media")
-    });
-
-    // move an item down in the table
-    $('#media-down').click(function(){
-        moveTableRowDown("stop-media")
     });
 
     // MARK: media page event listeners
@@ -960,10 +917,7 @@ function moveTableRowDown(tableName) {
         rowBelow.cells[1].innerHTML = name;
 
         // change order attributes in data model
-        if (tableName === "stop-media") {
-            addedMedia[name]["media_order"] = selectedRowIndex + 1;
-            addedMedia[selectedRow.cells[1].innerHTML]["media_order"] = selectedRowIndex;
-        } else if (tableName === "tour-stops") {
+        if (tableName === "tour-stops") {
             addedStops[name]["stop_order"] = selectedRowIndex + 1;
             addedStops[selectedRow.cells[1].innerHTML]["stop_order"] = selectedRowIndex;
         }
@@ -989,10 +943,7 @@ function moveTableRowUp(tableName) {
         selectedRow.cells[1].innerHTML = rowAbove.cells[1].innerHTML;
         rowAbove.cells[1].innerHTML = name;
 
-        if (tableName === "stop-media") {
-            addedMedia[name]["media_order"] = selectedRowIndex - 1;
-            addedMedia[selectedRow.cells[1].innerHTML]["media_order"] = selectedRowIndex;
-        } else if (tableName === "tour-stops") {
+        if (tableName === "tour-stops") {
             addedStops[name]["stop_order"] = selectedRowIndex - 1;
             addedStops[selectedRow.cells[1].innerHTML]["stop_order"] = selectedRowIndex;
         }
@@ -1044,17 +995,16 @@ function clearStopFields() {
 
 function clearTourFields() {
     // clear the fields
-    var title = document.getElementById("tour-title");
-    var description = document.getElementById("tour-description");
-    title.value = "";
-    description.value = "";
+    document.getElementById("tour-title").value = "";
+    document.getElementById("tour-description").value = "";
+
     // clear table
-    stopsTableBody = document.getElementById("tour-stops");
-    stopsTableBody.innerHTML = "";
+    document.getElementById("tour-stops").innerHTML = "";
     addedStops = {};
+
     //clear preview image
-    var preview = document.getElementById("tour-preview-image");
-    preview.value = "";
+    document.getElementById("tour-preview-image").value = "";
+    document.getElementById("preview-image-preview").src = "";
 }
 
 // triggered by onchange on the html element media-item
@@ -1139,8 +1089,6 @@ function updateMediaTable(name, userAdded) {
     // add row number
     var numRows = mediaTable.rows.length;
     var cellRowNumber = row.insertCell(0);
-    var numberImageFile = "stopNumberImages/bwr" + numRows + ".jpg";
-    cellRowNumber.innerHTML = "<img src=" + numberImageFile + " >"
 
     // add media name
     var cell = row.insertCell(1);
@@ -1149,7 +1097,7 @@ function updateMediaTable(name, userAdded) {
     if (userAdded) {
         addedMedia[name] = JSON.parse(JSON.stringify(existingMedia[name])); // avoid errors due to shallow copy
     }
-    addedMedia[name]["media_order"] = numRows;
+
     row.dataset.target = '#media-table-popup'; // set data-target
 
     // pull up the modal when double clicked
@@ -1160,7 +1108,7 @@ function updateMediaTable(name, userAdded) {
 
         // title the modal
         var modalTitle = document.getElementById("media-table-modal-title");
-        modalTitle.innerHTML = "For this stop only, change the caption of " + name;
+        modalTitle.innerHTML = name;
 
         // show the original caption
         var modalCaption = document.getElementById("media-pop-up-caption");
