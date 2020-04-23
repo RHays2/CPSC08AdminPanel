@@ -26,21 +26,23 @@ var quillEditor = undefined;
 // this variable holds the last known cursor location within the editor
 var cursorLocation = undefined;
 var currentStopUnderEdit = "";
+var currentTourUnderEdit = "";
 
 window.addEventListener("load", function () {
     // Initialize firebase
     const firebaseConfig = {
-        apiKey: "AIzaSyDfS00TUVcfmZxEBGH6J9dK6JpxpdEbO4A",
-        authDomain: "gonzagawalkingtour.firebaseapp.com",
-        databaseURL: "https://gonzagawalkingtour.firebaseio.com",
-        projectId: "gonzagawalkingtour",
-        storageBucket: "gonzagawalkingtour.appspot.com",
-        messagingSenderId: "239906026383",
-        appId: "1:239906026383:web:12366df5d3d970d7c6d1fa",
-        measurementId: "G-QZYFQXWSGT"
+      apiKey: "AIzaSyDfS00TUVcfmZxEBGH6J9dK6JpxpdEbO4A",
+      authDomain: "gonzagawalkingtour.firebaseapp.com",
+      databaseURL: "https://gonzagawalkingtour.firebaseio.com",
+      projectId: "gonzagawalkingtour",
+      storageBucket: "gonzagawalkingtour.appspot.com",
+      messagingSenderId: "239906026383",
+      appId: "1:239906026383:web:12366df5d3d970d7c6d1fa",
+      measurementId: "G-QZYFQXWSGT"
     };
 
     firebase.initializeApp(firebaseConfig);
+
 
     var tempTours;
     var tempStops;
@@ -129,7 +131,7 @@ window.addEventListener("load", function () {
                     existingTours[name] = {
                         "description": tempTours[tour]["description"],
                         "stops": stopItems,
-                        "isAdminOnly" : tempTours[tour]["admin_only"],
+                        "isAdminOnly" : "false",
                         "storage_name": tempTours[tour]["preview_image"],
                         "databaseID": tour
                     }
@@ -226,7 +228,7 @@ window.addEventListener("load", function () {
                     existingTours[name] = {
                         "description": tempTours[tour]["description"],
                         "stops": stopItems,
-                        "isAdminOnly" : tempTours[tour]["admin_only"],
+                        "isAdminOnly" : "true",
                         "storage_name": tempTours[tour]["preview_image"],
                         "databaseID": tour
                     }
@@ -276,7 +278,7 @@ window.addEventListener("load", function () {
             $("#edit-existing-tour").popover('show'); // bring up the popover
         } else {
             clearTourFields();
-
+            currentTourUnderEdit = selectedTour;
             document.getElementById("tour-title").value = selectedTour;
             document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
             document.getElementById("admin-only").value = existingTours[selectedTour]["isAdminOnly"];
@@ -330,7 +332,7 @@ window.addEventListener("load", function () {
     $('#start-edit-stop').click(function(e) {
         e.preventDefault();
         var selectedStop = document.getElementById("edit-existing-stop").value;
-        currentStopUnderEdit = selectedStop
+        currentStopUnderEdit = selectedStop;
         if (selectedStop === "") {
             $("#edit-existing-stop").popover('dispose');
             $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
@@ -454,7 +456,7 @@ window.addEventListener("load", function () {
         var src = preview.src.substring(preview.src.length - 10);
         var stopTable = document.getElementById("tour-stops");
         var isAdminOnly = document.getElementById("admin-only").value;
-        isAdminOnly = (isAdminOnly === 'true');
+
         numRows = stopTable.rows.length;
 
         // TODO: when editing, this things there isn't a title
@@ -473,41 +475,102 @@ window.addEventListener("load", function () {
             $("#tour-preview-image").popover({ title: 'Error', content: "Tour must have a preview image.", placement: "bottom"});
             $("#tour-preview-image").popover('show');
         } else {
-            // save the tour
-            existingTours[titleValue] = {
-                "description": descriptionValue,
-                "stops": addedStops,
-                "isAdminOnly" : isAdminOnly,
-                "preview": preview.src
-            };
-
-            if (editMode) {
-                editMode = false;
-                startEdit = undefined;
-                document.getElementById("delete-tour").style.visibility = "hidden";
-            } else {
-                // make an option in the edit tour modal's dropdown
-                var editTourSelect = document.getElementById("edit-existing-tour");
-                var option = document.createElement('option');
-                option.text = option.value = titleValue;
-                editTourSelect.add(option);
-
-                var file = document.getElementById('tour-preview-image').files[0];
+            // upload the preview image to the database
+            var file = document.getElementById('tour-preview-image').files[0];
+            if (file) { // if in edit mode, the file may not have been changed
                 var name = file.name;
                 var lastDot = name.lastIndexOf('.');
                 var extension = name.substring(lastDot);
                 var fileName = titleValue + extension;
 
-                // Create a root reference
+                // Create a root reference for uploading the preview image
                 var storageRef = firebase.storage().ref();
-
-                console.log(fileName);
                 var fileLoc = 'images/' + fileName;
                 // create a child for the new file
                 var spaceRef = storageRef.child(fileLoc);
                 spaceRef.put(file).then(function(snapshot) {
                     console.log('Uploaded!');
+                    existingTours["storage_name"] = fileLoc;
                 });
+            }
+
+            if (editMode) {
+                editMode = false;
+                startEdit = undefined;
+
+                existingTours[titleValue]["description"] = descriptionValue;
+                existingTours[titleValue]["stops"] = addedStops;
+                existingTours[titleValue]["isAdminOnly"] = isAdminOnly;
+                existingTours[titleValue]["preview"] = preview.src;
+                tourId = existingTours[titleValue].databaseID;
+                // post to the DB
+                if (tourId != undefined) { // make sure we have the databaseID
+                    var toursRef;
+                    var stopsRef = firebase.database().ref("stops");
+                    //get reference to database for assets
+                    var assetsRef = firebase.database().ref("assets");
+                    if (isAdminOnly === "true") {
+                        toursRef = firebase.database().ref("admin_only_tour");
+                    } else {
+                        toursRef = firebase.database().ref("tours");
+                    }
+                    // save the tour to the appropriate location
+                    console.log(tourId);
+                    toursRef.child(tourId).set({
+                        description: descriptionValue,
+                        length: numRows,
+                        name: titleValue,
+                        preview_image: existingTours[titleValue]["storage_name"]
+                    });
+
+                    for (stop of Object.keys(addedStops)) {
+                        if (!stop["databaseID"]) {  // if the stop is newly added during editing
+                            // pushes the stop to the database
+                            var newStopRef = stopsRef.child(tourId).push({
+                                description: sanitizeForDatabase(addedStops[stop]["description"]),
+                                lat: addedStops[stop]["location"]["lat"],
+                                lng: addedStops[stop]["location"]["lng"],
+                                name: addedStops[stop]["title"],
+                                id: stop,
+                                stop_order: addedStops[stop]["stop_order"]
+                            });
+
+                            //adding the stops from the tour
+                            let stopId = newStopRef.key;
+                            existingTours[titleValue]["stops"][stop]["databaseID"] = stopId;
+                            existingTours[titleValue]["stops"][stop]["tourID"] = tourId;
+                            var newAddedMedia = addedStops[stop]["media"];
+                            var asset;
+
+                            for(asset of Object.keys(newAddedMedia)) {
+                                var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
+                                    description: newAddedMedia[asset]["caption"],
+                                    name: asset,
+                                    storage_name: newAddedMedia[asset]["storage_name"]
+                                });
+                                existingTours[titleValue]["stops"][stop]["media"][asset]["id"] = newAssetsRef.key;
+                                existingTours[titleValue]["stops"][stop]["media"][asset]["stopID"] = stopId;
+                            }
+                        }
+                   }
+                }
+                currentTourUnderEdit = "";
+
+                document.getElementById("delete-tour").style.visibility = "hidden";
+            } else { // adding a new tour to the database
+                // save the tour
+                existingTours[titleValue] = {
+                    "description": descriptionValue,
+                    "stops": addedStops,
+                    "isAdminOnly": isAdminOnly,
+                    "preview": preview.src
+                };
+
+                // make an option in the edit tour modal's dropdown
+                var editTourSelect = document.getElementById("edit-existing-tour");
+                var option = document.createElement('option');
+                option.text = option.value = titleValue;
+                editTourSelect.add(option);
 
                 // TODO: upload entire tour
                 var databaseRef = firebase.database().ref();
@@ -538,6 +601,7 @@ window.addEventListener("load", function () {
                  // saving all of the stop informations to the tour
                  // first gets a reference to the tour database key
                  let tourId = newTourRef.key;
+                 existingTours["databaseID"] = tourId; // remember the databaseID in tours
                  var stop;
                  //iterating through the stops
                  for (stop of Object.keys(addedStops)) {
@@ -549,10 +613,12 @@ window.addEventListener("load", function () {
                         name: addedStops[stop]["title"],
                         id: stop,
                         stop_order: addedStops[stop]["stop_order"]
-                    })
+                    });
 
                     //adding the stops from the tour
                     let stopId = newStopRef.key;
+                    existingTours[stop]["databaseID"] = stopId;
+                    existingTours[stop]["tourID"] = tourId;
                     var newAddedMedia = addedStops[stop]["media"];
                     var asset;
 
@@ -562,9 +628,9 @@ window.addEventListener("load", function () {
                             name: asset,
                             storage_name: newAddedMedia[asset]["storage_name"]
                         });
+                        existingTours[stop][media]["id"] = newAssetsRef.key;
+                        existingTours[stop][media]["stopID"] = stopId;
                     }
-
-                    // TODO: update the objects to contain the keys
                 }
             }
             // $("#existing-stops").empty(); // clear the stops dropdown so stops cannot be reused
@@ -696,7 +762,7 @@ window.addEventListener("load", function () {
                 console.log("failed to delete ", fileLoc)
             });
 
-            if (tour["isAdminOnly"]) { // delete admin only tours {
+            if (tour["isAdminOnly" === "true"]) { // delete admin only tours {
                 adminOnlyRef.child(tour["databaseID"]).remove();
             } else {
                 // delete the tour
@@ -762,7 +828,7 @@ window.addEventListener("load", function () {
             // save the stop
             //determine if the stop already exists
             if (existingStops[idValue] == undefined) {
-                existingStops[idValue] = { 
+                existingStops[idValue] = {
                     "description": descriptionValue,
                     "media": addedMedia,
                     "location": {
@@ -782,15 +848,15 @@ window.addEventListener("load", function () {
                 existingStops[idValue]["id"] = idValue;
                 existingStops[idValue]["title"] = titleValue;
             }
-            
+
             clearStopFields();
 
             if (startEdit == "stop") { // we were editing a stop, return to home page
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = false;
                 startEdit = undefined;
-                
-                //post to the DB 
+
+                //post to the DB
                 if (existingStops[idValue].databaseID != undefined && existingStops[idValue].tourID != undefined && existingStops[idValue].stop_order != undefined) {
                     var stopRef = firebase.database().ref("stops");
                     stopRef.child(existingStops[idValue].tourID).child(existingStops[idValue].databaseID).set({
@@ -972,7 +1038,7 @@ window.addEventListener("load", function () {
                     spaceRef.put(file).then(function(snapshot) {
                         console.log('Uploaded!');
                     });
-                    //determine if this is a new media item for an edited tour
+                    // determine if this is a new media item for an edited tour
                     if (existingStops[currentStopUnderEdit] != undefined && existingStops[currentStopUnderEdit].databaseID != undefined) {
                         var assetRef = firebase.database().ref().child("assets");
                         assetRef.child(existingStops[currentStopUnderEdit].databaseID).child(assetId).set({
@@ -1694,6 +1760,29 @@ function reenterSavedDescription(selectedStop) {
     }
 }
 
+//runs when login button is clicked
+function login() {
+
+//gets email and password field
+var userEmail = document.getElementById("email_field").value;
+var userPass = document.getElementById("password_field").value;
+
+//checks with firebase authentication service
+firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+
+  //already has pre built error alerts through firebase
+  window.alert("Error : " + errorMessage);
+
+  // ...
+});
+
+}
+function logout() {
+firebase.auth().signOut();
+}
 
 // let curLength = quillEditor.getLength();
 //                 let offset = curLength - initialLength;

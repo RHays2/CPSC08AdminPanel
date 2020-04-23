@@ -10,6 +10,12 @@ Admin Panel Web App -->
 
     <title>Tour Admin Panel</title>
 
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/7.8.2/firebase-app.js"></script>
+    <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+
+
     <!--bootstrap
         https://getbootstrap.com/docs/4.4/getting-started/download/
     -->
@@ -40,7 +46,7 @@ Admin Panel Web App -->
             only let them navigate back with these
             assume create mode if they attempt to navigate with these
     -->
-    <nav>
+    <nav id="tabs">
     <ul class="nav nav-pills nav-justified" id="nav-pills">
         <li class="nav-item">
             <a href="#home-page" class="nav-link active">Home</a>
@@ -57,7 +63,7 @@ Admin Panel Web App -->
     </ul>
     </nav>
 
-    <div class="tab-content">
+    <div class="tab-content" id="tab-content">
         <div class="tab-pane fade show active" id="home-page">
             <div class="container">
                 <div class="row">
