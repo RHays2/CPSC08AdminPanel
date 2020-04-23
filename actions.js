@@ -159,7 +159,7 @@ window.addEventListener("load", function () {
 
                 // currently permission_denied
                 // read the existing admin_only items and populate the edit drop downs
-                firebase.database().ref('admin_only_tours').once('value').then(function(snapshot) {
+                firebase.database().ref('admin_only_tour').once('value').then(function(snapshot) {
                     var tempTours = (snapshot.val());
                     firebase.database().ref('stops').once('value').then(function(snapshot) {
                         var tempStops = (snapshot.val());
@@ -252,6 +252,19 @@ window.addEventListener("load", function () {
                             }
                         });
                     });
+                });
+
+                var signOutButton = document.getElementById("sign-out");
+                signOutButton.addEventListener('click', function() {
+                    firebase.auth().signOut().then(function() {
+                        //hide home content
+                        document.getElementById('login-content').style.display = "block";
+                        document.getElementById('home-content').style.display = "none";
+                        //delete all data from the objects
+                        existingMedia = {};
+                        existingStops = {};
+                        existingTours = {};
+                    })
                 });
 
                 // MARK: tab close event listeners
@@ -1738,25 +1751,27 @@ function reenterSavedDescription(selectedStop) {
 //runs when login button is clicked
 function login() {
 
-//gets email and password field
-var userEmail = document.getElementById("email_field").value;
-var userPass = document.getElementById("password_field").value;
+    //gets email and password field
+    var userEmail = document.getElementById("email_field").value;
+    var userPass = document.getElementById("password_field").value;
 
-//checks with firebase authentication service
-firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
-  // Handle Errors here.
-  var errorCode = error.code;
-  var errorMessage = error.message;
+    //clear password and username field
+    document.getElementById("email_field").value = "";
+    document.getElementById("password_field").value = "";
 
-  //already has pre built error alerts through firebase
-  window.alert("Error : " + errorMessage);
+    //checks with firebase authentication service
+    firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
 
-  // ...
-});
-
+        //already has pre built error alerts through firebase
+        window.alert("Error : " + errorMessage);
+    });
 }
+
 function logout() {
-firebase.auth().signOut();
+    firebase.auth().signOut();
 }
 
 // let curLength = quillEditor.getLength();

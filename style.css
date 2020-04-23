@@ -92,3 +92,9 @@
 .quill-editor-caption {
     font-size: 12px;
 }
+
+.sign-out {
+    position:absolute;
+    bottom: 5%;
+    left: 2%;
+}
