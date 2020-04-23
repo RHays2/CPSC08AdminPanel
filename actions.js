@@ -43,1081 +43,1056 @@ window.addEventListener("load", function () {
 
     firebase.initializeApp(firebaseConfig);
 
+    // called when firebase.auth().signInWithEmailAndPassword happens
+    firebase.auth().onAuthStateChanged(function(user) {
+      // checks that there is user information passed
+        if (user) {
+            // makes sure the user information is actually in firebase
+            var user = firebase.auth().currentUser;
 
-    var tempTours;
-    var tempStops;
-    var tempMedia;
+            // if the user is a registered user in firebase
+            if(user != null) {
 
-    // read the existing items and populate the edit drop downs
-    firebase.database().ref('tours').once('value').then(function(snapshot) {
-        var tempTours = (snapshot.val());
-        firebase.database().ref('stops').once('value').then(function(snapshot) {
-            var tempStops = (snapshot.val());
-            firebase.database().ref('assets').once('value').then(function(snapshot) {
-                var tempMedia = (snapshot.val());
+                document.getElementById('login-content').style.display = "none";
+                document.getElementById('home-content').style.display = "block";
+                // user has signed in with the correct password
+                var tempTours;
+                var tempStops;
+                var tempMedia;
 
-                for (tour of Object.keys(tempTours)) {
-                var stopItems = {};
+              // read the existing items and populate the edit drop downs
+                firebase.database().ref('tours').once('value').then(function(snapshot) {
+                    var tempTours = (snapshot.val());
+                    firebase.database().ref('stops').once('value').then(function(snapshot) {
+                        var tempStops = (snapshot.val());
+                        firebase.database().ref('assets').once('value').then(function(snapshot) {
+                            var tempMedia = (snapshot.val());
 
-                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                        var mediaItems = {};
-                        var idValue = tempStops[tour][stop]["id"]
-                        if (tempMedia[stop] !== undefined) { // if the stop has media
-                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                var name = tempMedia[stop][media]["name"];
-                                mediaItems[name] = {
-                                    "caption" : tempMedia[stop][media]["description"],
-                                    "id": media,
-                                    "stopID": stop,
-                                    "storage_name": tempMedia[stop][media]["storage_name"],
+                            for (tour of Object.keys(tempTours)) {
+                            var stopItems = {};
+
+                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                    var mediaItems = {};
+                                    var idValue = tempStops[tour][stop]["id"]
+                                    if (tempMedia[stop] !== undefined) { // if the stop has media
+                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                            var name = tempMedia[stop][media]["name"];
+                                            mediaItems[name] = {
+                                                "caption" : tempMedia[stop][media]["description"],
+                                                "id": media,
+                                                "stopID": stop,
+                                                "storage_name": tempMedia[stop][media]["storage_name"],
+                                            }
+                                            existingMedia[name] = mediaItems[name];
+                                            // // make an option in the add media modal's dropdown
+                                            // var existingMediaSelect = document.getElementById("existing-media");
+                                            // var option = document.createElement('option');
+                                            // option.text = option.value = name;
+                                            // existingMediaSelect.add(option);
+
+                                            // make an option in the edit media modal's dropdown
+                                            var editMediaSelect = document.getElementById("edit-existing-media");
+                                            var option = document.createElement('option');
+                                            option.text = option.value = name;
+                                            editMediaSelect.add(option)
+                                        }
+                                        // create stop object for stop existing stops and dropdowns
+
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": mediaItems,
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    } else {
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": {},
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    }
+                                    existingStops[idValue] = stopItems[idValue];
+                                    // make an option in the add stop modal's dropdown
+                                    // var existingMediaSelect = document.getElementById("existing-stops");
+                                    // var option = document.createElement('option');
+                                    // option.text = option.value = tempStops[tour][stop]["id"];
+                                    // option.selected = true; // the newly created stop should be selected
+                                    // existingMediaSelect.add(option);
+                                    // make an option in the edit stop modal's dropdown
+                                    var editStopSelect = document.getElementById("edit-existing-stop");
+                                    var option = document.createElement('option');
+                                    option.text = option.value = tempStops[tour][stop]["id"];
+                                    editStopSelect.add(option);
                                 }
-                                existingMedia[name] = mediaItems[name];
-                                // // make an option in the add media modal's dropdown
-                                // var existingMediaSelect = document.getElementById("existing-media");
-                                // var option = document.createElement('option');
-                                // option.text = option.value = name;
-                                // existingMediaSelect.add(option);
-
-                                // make an option in the edit media modal's dropdown
-                                var editMediaSelect = document.getElementById("edit-existing-media");
+                                var name = tempTours[tour]["name"];
+                                existingTours[name] = {
+                                    "description": tempTours[tour]["description"],
+                                    "stops": stopItems,
+                                    "isAdminOnly" : tempTours[tour]["admin_only"],
+                                    "storage_name": tempTours[tour]["preview_image"],
+                                    "databaseID": tour
+                                }
+                                // make an option in the edit tour modal's dropdown
+                                var editTourSelect = document.getElementById("edit-existing-tour");
                                 var option = document.createElement('option');
                                 option.text = option.value = name;
-                                editMediaSelect.add(option)
+                                editTourSelect.add(option);
                             }
-                            // create stop object for stop existing stops and dropdowns
-
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": mediaItems,
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        } else {
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": {},
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        }
-                        existingStops[idValue] = stopItems[idValue];
-                        // make an option in the add stop modal's dropdown
-                        // var existingMediaSelect = document.getElementById("existing-stops");
-                        // var option = document.createElement('option');
-                        // option.text = option.value = tempStops[tour][stop]["id"];
-                        // option.selected = true; // the newly created stop should be selected
-                        // existingMediaSelect.add(option);
-                        // make an option in the edit stop modal's dropdown
-                        var editStopSelect = document.getElementById("edit-existing-stop");
-                        var option = document.createElement('option');
-                        option.text = option.value = tempStops[tour][stop]["id"];
-                        editStopSelect.add(option);
-                    }
-                    var name = tempTours[tour]["name"];
-                    existingTours[name] = {
-                        "description": tempTours[tour]["description"],
-                        "stops": stopItems,
-                        "isAdminOnly" : "false",
-                        "storage_name": tempTours[tour]["preview_image"],
-                        "databaseID": tour
-                    }
-                    // make an option in the edit tour modal's dropdown
-                    var editTourSelect = document.getElementById("edit-existing-tour");
-                    var option = document.createElement('option');
-                    option.text = option.value = name;
-                    editTourSelect.add(option);
-                }
-            });
-        });
-    });
-
-    // currently permission_denied
-    // read the existing admin_only items and populate the edit drop downs
-    firebase.database().ref('admin_only_tours').once('value').then(function(snapshot) {
-        var tempTours = (snapshot.val());
-        firebase.database().ref('stops').once('value').then(function(snapshot) {
-            var tempStops = (snapshot.val());
-            firebase.database().ref('assets').once('value').then(function(snapshot) {
-                var tempMedia = (snapshot.val());
-
-                for (tour of Object.keys(tempTours)) {
-                  var stopItems = {};
-
-                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                        var mediaItems = {};
-                        var idValue = tempStops[tour][stop]["id"]
-                        if (tempMedia[stop] !== undefined) { // if the stop has media
-                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                var name = tempMedia[stop][media]["name"];
-                                mediaItems[name] = {
-                                    "caption" : tempMedia[stop][media]["description"],
-                                    "id": media,
-                                    "stopID": stop,
-                                    "storage_name": tempMedia[stop][media]["storage_name"]
-                                }
-                                existingMedia[name] = mediaItems[name];
-                                // // make an option in the add media modal's dropdown
-                                // var existingMediaSelect = document.getElementById("existing-media");
-                                // var option = document.createElement('option');
-                                // option.text = option.value = name;
-                                // existingMediaSelect.add(option);
-
-                                // make an option in the edit media modal's dropdown
-                                var editMediaSelect = document.getElementById("edit-existing-media");
-                                var option = document.createElement('option');
-                                option.text = option.value = name;
-                                editMediaSelect.add(option)
-                            }
-                            // create stop object for stop existing stops and dropdowns
-
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": mediaItems,
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        } else {
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": {},
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        }
-                        existingStops[idValue] = stopItems[idValue];
-                        // make an option in the add stop modal's dropdown
-                        // var existingMediaSelect = document.getElementById("existing-stops");
-                        // var option = document.createElement('option');
-                        // option.text = option.value = tempStops[tour][stop]["id"];
-                        // option.selected = true; // the newly created stop should be selected
-                        // existingMediaSelect.add(option);
-                        // make an option in the edit stop modal's dropdown
-                        var editStopSelect = document.getElementById("edit-existing-stop");
-                        var option = document.createElement('option');
-                        option.text = option.value = tempStops[tour][stop]["id"];
-                        editStopSelect.add(option);
-                    }
-                    var name = tempTours[tour]["name"];
-                    existingTours[name] = {
-                        "description": tempTours[tour]["description"],
-                        "stops": stopItems,
-                        "isAdminOnly" : "true",
-                        "storage_name": tempTours[tour]["preview_image"],
-                        "databaseID": tour
-                    }
-                    // make an option in the edit tour modal's dropdown
-                    var editTourSelect = document.getElementById("edit-existing-tour");
-                    var option = document.createElement('option');
-                    option.text = option.value = name;
-                    editTourSelect.add(option);
-                }
-            });
-        });
-    });
-
-    // MARK: tab close event listeners
-    //      remove warnings when a tab is exited
-    $('#nav-pills a[href="#home-page"]').on('hide.bs.tab', function(){
-        removeHomeWarnings();
-    });
-    $('#nav-pills a[href="#tour-page"]').on('hide.bs.tab', function(){
-        removeTourWarnings();
-    });
-    $('#nav-pills a[href="#stop-page"]').on('hide.bs.tab', function(){
-        removeStopWarnings();
-    });
-    $('#nav-pills a[href="#media-page"]').on('hide.bs.tab', function(){
-        removeMediaWarnings();
-    });
-
-    // MARK: Home page event listeners
-    // On the home page, the create tour button takes us to the tour page
-    // and the map is initialized
-    $('#create-tour').click(function(e) {
-        e.preventDefault();
-        $('#nav-pills a[href="#tour-page"]').tab('show');
-        initTourMap();
-    });
-
-    // On the home page, the "edit this tour" button takes us to the tour page
-    // Edit mode is set to true
-    // The map is initialized
-    $('#start-edit-tour').click(function(e) {
-        e.preventDefault();
-        var selectedTour = document.getElementById("edit-existing-tour").value;
-        if (selectedTour === "") {
-            $("#edit-existing-tour").popover('dispose');
-            $("#edit-existing-tour").popover({ title: 'Error', content: "Please select a tour to edit"});
-            $("#edit-existing-tour").popover('show'); // bring up the popover
-        } else {
-            clearTourFields();
-            currentTourUnderEdit = selectedTour;
-            document.getElementById("tour-title").value = selectedTour;
-            document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
-            document.getElementById("admin-only").value = existingTours[selectedTour]["isAdminOnly"];
-
-            var preview_image = document.getElementById("preview-image-preview");
-            if (!existingTours[selectedTour]["preview"]) {
-                getImageNamed(existingTours[selectedTour]["storage_name"], function(url) {
-                    preview_image.src = setImageOrientation(url, preview_image);
-                    existingTours[selectedTour]["preview"] = url;
-                });
-            } else {
-                preview_image.src = setImageOrientation(existingTours[selectedTour]["preview"], preview_image);
-            }
-
-            // add stops back to the table
-            var existingStops = existingTours[selectedTour]["stops"]
-            var stops = Object.keys(existingStops);
-            // for (var i = 0; i < stops.length; i++) {
-            //     updateStopTable(stops[i]);
-            // }
-            for (var i = 1; i <= stops.length; i++) {
-                for (var j = 0; j < stops.length; j++) {
-                    if (existingStops[stops[j]]["stop_order"]===i) { // add items in order 1+
-                        updateStopTable(stops[j]);
-                    }
-                }
-            }
-
-            $('#edit-which-tour').modal('hide');
-            $('#nav-pills a[href="#tour-page"]').tab('show');
-            // show delete tour button
-            document.getElementById('delete-tour').style.visibility = "visible";
-            editMode = true;
-            startEdit = "tour";
-            initTourMap();
-        }
-    });
-
-    // Remove the warning next time the edit-existing-tour dropdown box is changed
-    $('#edit-existing-tour').on('change', function() {
-        $("#edit-existing-tour").popover('dispose');
-    });
-    // remove the warning if the edit existing tour modal is closed
-    $('#edit-which-tour').on('hide.bs.modal', function() {
-        $("#edit-existing-tour").popover('dispose');
-    });
-
-    // On the home page, the "edit this stop" button takes us to the stop page
-    // Edit mode is set to true
-    // The map is initialized
-    $('#start-edit-stop').click(function(e) {
-        e.preventDefault();
-        var selectedStop = document.getElementById("edit-existing-stop").value;
-        currentStopUnderEdit = selectedStop;
-        if (selectedStop === "") {
-            $("#edit-existing-stop").popover('dispose');
-            $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
-            $("#edit-existing-stop").popover('show'); // bring up the popover
-        } else {
-            clearStopFields();
-            document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
-            var existingMediaForDescription = document.getElementById("existing-media-for-description");
-            //document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
-            document.getElementById("stop-id").value = selectedStop;
-            // add media back to the table
-            addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
-            var mediaItems = Object.keys(addedMedia);
-
-            var promises = [];
-            for (var j = 0; j < mediaItems.length; j++) {
-                //add media as options to the existing-media-for-description selector
-                var option = document.createElement('option');
-                option.text = option.value = mediaItems[j];
-                existingMediaForDescription.add(option);
-                //updateMediaTable(mediaItems[j], false);
-                promises.push(updateMediaObj(mediaItems[j],addedMedia[mediaItems[j]]["storage_name"]));
-            }
-
-            Promise.all(promises).then(function() {
-                //update stop description
-                reenterSavedDescription(selectedStop);
-            }, function(error){ console.log(error) });
-
-            $('#edit-which-stop').modal('hide');
-            $('#nav-pills a[href="#stop-page"]').tab('show');
-            initStopMap();
-            replaceMarkerAndPanTo(existingStops[selectedStop]["location"]);
-            editMode = true;
-            startEdit = "stop";
-        }
-    });
-
-    function updateMediaObj(mediaName, storageName) {
-      return new Promise(function(resolve, reject){
-        getImageNamed(addedMedia[mediaName]["storage_name"], function(url){
-            addedMedia[mediaName]["media-item"] = url;
-            existingMedia[mediaName]["media-item"] = url;
-            updateMediaTable(mediaName, false);
-            resolve();
-          });
-      });
-    }
-
-    // Remove the warning next time the edit-existing-stop dropdown box is changed
-    $('#edit-existing-stop').on('change', function() {
-        $("#edit-existing-stop").popover('dispose');
-    });
-    // remove the warning if the edit existing stop modal is closed
-    $('#edit-which-stop').on('hide.bs.modal', function() {
-        $("#edit-existing-stop").popover('dispose');
-    });
-
-    // On the home page, the "edit this media item" button takes us to the stop page
-    // Edit mode is set to true
-    $('#start-edit-media').click(function(e) {
-        e.preventDefault();
-        var selectedMedia = document.getElementById("edit-existing-media").value;
-        if (selectedMedia === "") {
-            $("edit-existing-media").popover('dispose');
-            $("#edit-existing-media").popover({ title: 'Error', content: "Please select a media item to edit"});
-            $("#edit-existing-media").popover('show'); // bring up the popover
-        } else {
-            clearMediaFields();
-            document.getElementById("media-title").value = selectedMedia;
-            console.log(document.getElementById("media-title").value);
-            // document.getElementById("media-description").value = existingMedia[selectedMedia]["description"];
-
-            var preview_image = document.getElementById("media-preview");
-            if (!existingMedia[selectedMedia]["media-item"]) {
-                getImageNamed(existingMedia[selectedMedia]["storage_name"], function(url) {
-                    preview_image.src = setImageOrientation(url, preview_image);
-                    existingMedia[selectedMedia]["media-item"] = url;
-                });
-            } else {
-                preview_image.src = setImageOrientation(existingMedia[selectedMedia]["media-item"], preview_image);
-            }
-
-
-            document.getElementById("media-caption").value = existingMedia[selectedMedia]["caption"];
-            $('#edit-which-media').modal('hide');
-            $('#nav-pills a[href="#media-page"]').tab('show');
-            editMode = true;
-            startEdit = "media";
-        }
-    });
-
-    // Remove the warning next time the edit-existing-media dropdown box is changed
-    $('#edit-existing-media').on('change', function() {
-        $("#edit-existing-media").popover('dispose');
-    });
-    // remove the warning if the edit existing stop modal is closed
-    $('#edit-which-media').on('hide.bs.modal', function() {
-        $("#edit-existing-media").popover('dispose');
-    });
-
-    // MARK: tour page event listeners
-
-    // On the tour page, the "Create new stop" button
-    // takes us to the stop page
-    $('#create-stop').click(function(e){
-        e.preventDefault();
-        $('#nav-pills a[href="#stop-page"]').tab('show');
-        initStopMap();
-    });
-
-    // On the tour page, the "Save tour" button returns us to the
-    // home page
-    $('#save-tour').click(function(e) {
-        e.preventDefault();
-        var title = document.getElementById("tour-title");
-        var description = document.getElementById("tour-description");
-        var preview = document.getElementById("preview-image-preview");
-        var titleValue = title.value;
-        var descriptionValue = description.value;
-        var src = preview.src.substring(preview.src.length - 10);
-        var stopTable = document.getElementById("tour-stops");
-        var isAdminOnly = document.getElementById("admin-only").value;
-
-        numRows = stopTable.rows.length;
-
-        // TODO: when editing, this things there isn't a title
-        // We could make the title unchangeable in editing and ignore this check
-        // Or we need to figure out a way to make this check when the value is set in js
-        if (!titleValue) { // there must be a title
-            $("#tour-title").popover('dispose');
-            $("#tour-title").popover({ title: 'Error', content: "Title required"});
-            $("#tour-title").popover('show');
-        } else if (Object.keys(existingTours).includes(titleValue) && !editMode) { // title must be unique unless in editMode
-            $("#tour-title").popover('dispose');
-            $("#tour-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#tour-title").popover('show');
-        } else if (src == "index.html") {
-            $("#tour-preview-image").popover('dispose');
-            $("#tour-preview-image").popover({ title: 'Error', content: "Tour must have a preview image.", placement: "bottom"});
-            $("#tour-preview-image").popover('show');
-        } else {
-            // upload the preview image to the database
-            var file = document.getElementById('tour-preview-image').files[0];
-            if (file) { // if in edit mode, the file may not have been changed
-                var name = file.name;
-                var lastDot = name.lastIndexOf('.');
-                var extension = name.substring(lastDot);
-                var fileName = titleValue + extension;
-
-                // Create a root reference for uploading the preview image
-                var storageRef = firebase.storage().ref();
-                var fileLoc = 'images/' + fileName;
-                // create a child for the new file
-                var spaceRef = storageRef.child(fileLoc);
-                spaceRef.put(file).then(function(snapshot) {
-                    console.log('Uploaded!');
-                    existingTours["storage_name"] = fileLoc;
-                });
-            }
-
-            if (editMode) {
-                editMode = false;
-                startEdit = undefined;
-
-                existingTours[titleValue]["description"] = descriptionValue;
-                existingTours[titleValue]["stops"] = addedStops;
-                existingTours[titleValue]["isAdminOnly"] = isAdminOnly;
-                existingTours[titleValue]["preview"] = preview.src;
-                tourId = existingTours[titleValue].databaseID;
-                // post to the DB
-                if (tourId != undefined) { // make sure we have the databaseID
-                    var toursRef;
-                    var stopsRef = firebase.database().ref("stops");
-                    //get reference to database for assets
-                    var assetsRef = firebase.database().ref("assets");
-                    if (isAdminOnly === "true") {
-                        toursRef = firebase.database().ref("admin_only_tour");
-                    } else {
-                        toursRef = firebase.database().ref("tours");
-                    }
-                    // save the tour to the appropriate location
-                    console.log(tourId);
-                    toursRef.child(tourId).set({
-                        description: descriptionValue,
-                        length: numRows,
-                        name: titleValue,
-                        preview_image: existingTours[titleValue]["storage_name"]
+                        });
                     });
+                });
 
-                    for (stop of Object.keys(addedStops)) {
-                        if (!stop["databaseID"]) {  // if the stop is newly added during editing
-                            // pushes the stop to the database
-                            var newStopRef = stopsRef.child(tourId).push({
-                                description: sanitizeForDatabase(addedStops[stop]["description"]),
-                                lat: addedStops[stop]["location"]["lat"],
-                                lng: addedStops[stop]["location"]["lng"],
-                                name: addedStops[stop]["title"],
-                                id: stop,
-                                stop_order: addedStops[stop]["stop_order"]
+                // currently permission_denied
+                // read the existing admin_only items and populate the edit drop downs
+                firebase.database().ref('admin_only_tours').once('value').then(function(snapshot) {
+                    var tempTours = (snapshot.val());
+                    firebase.database().ref('stops').once('value').then(function(snapshot) {
+                        var tempStops = (snapshot.val());
+                        firebase.database().ref('assets').once('value').then(function(snapshot) {
+                            var tempMedia = (snapshot.val());
+
+                            for (tour of Object.keys(tempTours)) {
+                              var stopItems = {};
+
+                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                    var mediaItems = {};
+                                    var idValue = tempStops[tour][stop]["id"]
+                                    if (tempMedia[stop] !== undefined) { // if the stop has media
+                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                            var name = tempMedia[stop][media]["name"];
+                                            mediaItems[name] = {
+                                                "caption" : tempMedia[stop][media]["description"],
+                                                "id": media,
+                                                "stopID": stop,
+                                                "storage_name": tempMedia[stop][media]["storage_name"]
+                                            }
+                                            existingMedia[name] = mediaItems[name];
+                                            // // make an option in the add media modal's dropdown
+                                            // var existingMediaSelect = document.getElementById("existing-media");
+                                            // var option = document.createElement('option');
+                                            // option.text = option.value = name;
+                                            // existingMediaSelect.add(option);
+
+                                            // make an option in the edit media modal's dropdown
+                                            var editMediaSelect = document.getElementById("edit-existing-media");
+                                            var option = document.createElement('option');
+                                            option.text = option.value = name;
+                                            editMediaSelect.add(option)
+                                        }
+                                        // create stop object for stop existing stops and dropdowns
+
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": mediaItems,
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    } else {
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": {},
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    }
+                                    existingStops[idValue] = stopItems[idValue];
+                                    // make an option in the add stop modal's dropdown
+                                    // var existingMediaSelect = document.getElementById("existing-stops");
+                                    // var option = document.createElement('option');
+                                    // option.text = option.value = tempStops[tour][stop]["id"];
+                                    // option.selected = true; // the newly created stop should be selected
+                                    // existingMediaSelect.add(option);
+                                    // make an option in the edit stop modal's dropdown
+                                    var editStopSelect = document.getElementById("edit-existing-stop");
+                                    var option = document.createElement('option');
+                                    option.text = option.value = tempStops[tour][stop]["id"];
+                                    editStopSelect.add(option);
+                                }
+                                var name = tempTours[tour]["name"];
+                                existingTours[name] = {
+                                    "description": tempTours[tour]["description"],
+                                    "stops": stopItems,
+                                    "isAdminOnly" : tempTours[tour]["admin_only"],
+                                    "storage_name": tempTours[tour]["preview_image"],
+                                    "databaseID": tour
+                                }
+                                // make an option in the edit tour modal's dropdown
+                                var editTourSelect = document.getElementById("edit-existing-tour");
+                                var option = document.createElement('option');
+                                option.text = option.value = name;
+                                editTourSelect.add(option);
+                            }
+                        });
+                    });
+                });
+
+                // MARK: tab close event listeners
+                //      remove warnings when a tab is exited
+                $('#nav-pills a[href="#home-page"]').on('hide.bs.tab', function(){
+                    removeHomeWarnings();
+                });
+                $('#nav-pills a[href="#tour-page"]').on('hide.bs.tab', function(){
+                    removeTourWarnings();
+                });
+                $('#nav-pills a[href="#stop-page"]').on('hide.bs.tab', function(){
+                    removeStopWarnings();
+                });
+                $('#nav-pills a[href="#media-page"]').on('hide.bs.tab', function(){
+                    removeMediaWarnings();
+                });
+
+                // MARK: Home page event listeners
+                // On the home page, the create tour button takes us to the tour page
+                // and the map is initialized
+                $('#create-tour').click(function(e) {
+                    e.preventDefault();
+                    $('#nav-pills a[href="#tour-page"]').tab('show');
+                    initTourMap();
+                });
+
+                // On the home page, the "edit this tour" button takes us to the tour page
+                // Edit mode is set to true
+                // The map is initialized
+                $('#start-edit-tour').click(function(e) {
+                    e.preventDefault();
+                    var selectedTour = document.getElementById("edit-existing-tour").value;
+                    if (selectedTour === "") {
+                        $("#edit-existing-tour").popover('dispose');
+                        $("#edit-existing-tour").popover({ title: 'Error', content: "Please select a tour to edit"});
+                        $("#edit-existing-tour").popover('show'); // bring up the popover
+                    } else {
+                        clearTourFields();
+                        currentTourUnderEdit = selectedTour;
+                        document.getElementById("tour-title").value = selectedTour;
+                        document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
+                        document.getElementById("admin-only").value = existingTours[selectedTour]["isAdminOnly"];
+
+                        var preview_image = document.getElementById("preview-image-preview");
+                        if (!existingTours[selectedTour]["preview"]) {
+                            getImageNamed(existingTours[selectedTour]["storage_name"], function(url) {
+                                preview_image.src = setImageOrientation(url, preview_image);
+                                existingTours[selectedTour]["preview"] = url;
+                            });
+                        } else {
+                            preview_image.src = setImageOrientation(existingTours[selectedTour]["preview"], preview_image);
+                        }
+
+                        // add stops back to the table
+                        var existingStops = existingTours[selectedTour]["stops"]
+                        var stops = Object.keys(existingStops);
+                        // for (var i = 0; i < stops.length; i++) {
+                        //     updateStopTable(stops[i]);
+                        // }
+                        for (var i = 1; i <= stops.length; i++) {
+                            for (var j = 0; j < stops.length; j++) {
+                                if (existingStops[stops[j]]["stop_order"]===i) { // add items in order 1+
+                                    updateStopTable(stops[j]);
+                                }
+                            }
+                        }
+
+                        $('#edit-which-tour').modal('hide');
+                        $('#nav-pills a[href="#tour-page"]').tab('show');
+                        // show delete tour button
+                        document.getElementById('delete-tour').style.visibility = "visible";
+                        editMode = true;
+                        startEdit = "tour";
+                        initTourMap();
+                    }
+                });
+
+                // Remove the warning next time the edit-existing-tour dropdown box is changed
+                $('#edit-existing-tour').on('change', function() {
+                    $("#edit-existing-tour").popover('dispose');
+                });
+                // remove the warning if the edit existing tour modal is closed
+                $('#edit-which-tour').on('hide.bs.modal', function() {
+                    $("#edit-existing-tour").popover('dispose');
+                });
+
+                // On the home page, the "edit this stop" button takes us to the stop page
+                // Edit mode is set to true
+                // The map is initialized
+                $('#start-edit-stop').click(function(e) {
+                    e.preventDefault();
+                    var selectedStop = document.getElementById("edit-existing-stop").value;
+                    currentStopUnderEdit = selectedStop;
+                    if (selectedStop === "") {
+                        $("#edit-existing-stop").popover('dispose');
+                        $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
+                        $("#edit-existing-stop").popover('show'); // bring up the popover
+                    } else {
+                        clearStopFields();
+                        document.getElementById("stop-title").value = existingStops[selectedStop]["title"];
+                        var existingMediaForDescription = document.getElementById("existing-media-for-description");
+                        //document.getElementById("stop-description").value = existingStops[selectedStop]["description"];
+                        document.getElementById("stop-id").value = selectedStop;
+                        // add media back to the table
+                        addedMedia = JSON.parse(JSON.stringify(existingStops[selectedStop]["media"]));
+                        var mediaItems = Object.keys(addedMedia);
+
+                        var promises = [];
+                        for (var j = 0; j < mediaItems.length; j++) {
+                            //add media as options to the existing-media-for-description selector
+                            var option = document.createElement('option');
+                            option.text = option.value = mediaItems[j];
+                            existingMediaForDescription.add(option);
+                            //updateMediaTable(mediaItems[j], false);
+                            promises.push(updateMediaObj(mediaItems[j],addedMedia[mediaItems[j]]["storage_name"]));
+                        }
+
+                        Promise.all(promises).then(function() {
+                            //update stop description
+                            reenterSavedDescription(selectedStop);
+                        }, function(error){ console.log(error) });
+
+                        $('#edit-which-stop').modal('hide');
+                        $('#nav-pills a[href="#stop-page"]').tab('show');
+                        initStopMap();
+                        replaceMarkerAndPanTo(existingStops[selectedStop]["location"]);
+                        editMode = true;
+                        startEdit = "stop";
+                    }
+                });
+
+                function updateMediaObj(mediaName, storageName) {
+                  return new Promise(function(resolve, reject){
+                    getImageNamed(addedMedia[mediaName]["storage_name"], function(url){
+                        addedMedia[mediaName]["media-item"] = url;
+                        existingMedia[mediaName]["media-item"] = url;
+                        updateMediaTable(mediaName, false);
+                        resolve();
+                      });
+                  });
+                }
+
+                // Remove the warning next time the edit-existing-stop dropdown box is changed
+                $('#edit-existing-stop').on('change', function() {
+                    $("#edit-existing-stop").popover('dispose');
+                });
+                // remove the warning if the edit existing stop modal is closed
+                $('#edit-which-stop').on('hide.bs.modal', function() {
+                    $("#edit-existing-stop").popover('dispose');
+                });
+
+                // On the home page, the "edit this media item" button takes us to the stop page
+                // Edit mode is set to true
+                $('#start-edit-media').click(function(e) {
+                    e.preventDefault();
+                    var selectedMedia = document.getElementById("edit-existing-media").value;
+                    if (selectedMedia === "") {
+                        $("edit-existing-media").popover('dispose');
+                        $("#edit-existing-media").popover({ title: 'Error', content: "Please select a media item to edit"});
+                        $("#edit-existing-media").popover('show'); // bring up the popover
+                    } else {
+                        clearMediaFields();
+                        document.getElementById("media-title").value = selectedMedia;
+                        console.log(document.getElementById("media-title").value);
+                        // document.getElementById("media-description").value = existingMedia[selectedMedia]["description"];
+
+                        var preview_image = document.getElementById("media-preview");
+                        if (!existingMedia[selectedMedia]["media-item"]) {
+                            getImageNamed(existingMedia[selectedMedia]["storage_name"], function(url) {
+                                preview_image.src = setImageOrientation(url, preview_image);
+                                existingMedia[selectedMedia]["media-item"] = url;
+                            });
+                        } else {
+                            preview_image.src = setImageOrientation(existingMedia[selectedMedia]["media-item"], preview_image);
+                        }
+
+
+                        document.getElementById("media-caption").value = existingMedia[selectedMedia]["caption"];
+                        $('#edit-which-media').modal('hide');
+                        $('#nav-pills a[href="#media-page"]').tab('show');
+                        editMode = true;
+                        startEdit = "media";
+                    }
+                });
+
+                // Remove the warning next time the edit-existing-media dropdown box is changed
+                $('#edit-existing-media').on('change', function() {
+                    $("#edit-existing-media").popover('dispose');
+                });
+                // remove the warning if the edit existing stop modal is closed
+                $('#edit-which-media').on('hide.bs.modal', function() {
+                    $("#edit-existing-media").popover('dispose');
+                });
+
+                // MARK: tour page event listeners
+
+                // On the tour page, the "Create new stop" button
+                // takes us to the stop page
+                $('#create-stop').click(function(e){
+                    e.preventDefault();
+                    $('#nav-pills a[href="#stop-page"]').tab('show');
+                    initStopMap();
+                });
+
+                // On the tour page, the "Save tour" button returns us to the
+                // home page
+                $('#save-tour').click(function(e) {
+                    e.preventDefault();
+                    var title = document.getElementById("tour-title");
+                    var description = document.getElementById("tour-description");
+                    var preview = document.getElementById("preview-image-preview");
+                    var titleValue = title.value;
+                    var descriptionValue = description.value;
+                    var src = preview.src.substring(preview.src.length - 10);
+                    var stopTable = document.getElementById("tour-stops");
+                    var isAdminOnly = document.getElementById("admin-only").value;
+
+                    numRows = stopTable.rows.length;
+
+                    // TODO: when editing, this things there isn't a title
+                    // We could make the title unchangeable in editing and ignore this check
+                    // Or we need to figure out a way to make this check when the value is set in js
+                    if (!titleValue) { // there must be a title
+                        $("#tour-title").popover('dispose');
+                        $("#tour-title").popover({ title: 'Error', content: "Title required"});
+                        $("#tour-title").popover('show');
+                    } else if (Object.keys(existingTours).includes(titleValue) && !editMode) { // title must be unique unless in editMode
+                        $("#tour-title").popover('dispose');
+                        $("#tour-title").popover({ title: 'Error', content: "Title must be unique"});
+                        $("#tour-title").popover('show');
+                    } else if (src == "index.html") {
+                        $("#tour-preview-image").popover('dispose');
+                        $("#tour-preview-image").popover({ title: 'Error', content: "Tour must have a preview image.", placement: "bottom"});
+                        $("#tour-preview-image").popover('show');
+                    } else {
+                        // save the tour
+                        existingTours[titleValue] = {
+                            "description": descriptionValue,
+                            "stops": addedStops,
+                            "isAdminOnly" : isAdminOnly,
+                            "preview":preview.src
+                        };
+
+                        if (editMode) {
+                            editMode = false;
+                            startEdit = undefined;
+
+                            existingTours[titleValue]["description"] = descriptionValue;
+                            existingTours[titleValue]["stops"] = addedStops;
+                            existingTours[titleValue]["isAdminOnly"] = isAdminOnly;
+                            existingTours[titleValue]["preview"] = preview.src;
+
+                            //post to the DB
+                            if (existingTours[titleValue].databaseID != undefined) { // make sure we have the databaseID
+                                var toursRef;
+                                if (isAdminOnly === "true") {
+                                    toursRef = firebase.database().ref("admin_only_tour");
+                                } else {
+                                    toursRef = firebase.database().ref("tours");
+                                }
+
+                                toursRef.child(existingTours[titleValue].databaseID).set({
+                                    description: descriptionValue,
+                                    length: numRows,
+                                    name: titleValue,
+                                    preview_image: fileName
+                                });
+                            }
+                            currentTourUnderEdit = "";
+
+                            document.getElementById("delete-tour").style.visibility = "hidden";
+                        } else { // adding a new tour to the database
+                            // make an option in the edit tour modal's dropdown
+                            var editTourSelect = document.getElementById("edit-existing-tour");
+                            var option = document.createElement('option');
+                            option.text = option.value = titleValue;
+                            editTourSelect.add(option);
+
+                            var file = document.getElementById('tour-preview-image').files[0];
+                            var name = file.name;
+                            var lastDot = name.lastIndexOf('.');
+                            var extension = name.substring(lastDot);
+                            var fileName = titleValue + extension;
+
+                            // Create a root reference
+                            var storageRef = firebase.storage().ref();
+
+                            console.log(fileName);
+                            var fileLoc = 'images/' + fileName;
+                            // create a child for the new file
+                            var spaceRef = storageRef.child(fileLoc);
+                            spaceRef.put(file).then(function(snapshot) {
+                                console.log('Uploaded!');
                             });
 
-                            //adding the stops from the tour
-                            let stopId = newStopRef.key;
-                            existingTours[titleValue]["stops"][stop]["databaseID"] = stopId;
-                            existingTours[titleValue]["stops"][stop]["tourID"] = tourId;
-                            var newAddedMedia = addedStops[stop]["media"];
-                            var asset;
+                            // TODO: upload entire tour
+                            var databaseRef = firebase.database().ref();
+                            var toursRef = databaseRef.child("tours");
+                            var stopsRef = databaseRef.child("stops");
+                            //get reference to database for assets
+                            var assetsRef = databaseRef.child("assets");
+                            var adminOnlyRef = databaseRef.child("admin_only_tour");
 
-                            for(asset of Object.keys(newAddedMedia)) {
-                                var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
-                                    description: newAddedMedia[asset]["caption"],
-                                    name: asset,
-                                    storage_name: newAddedMedia[asset]["storage_name"]
+                            var newTourRef;
+                            if (isAdminOnly === "true") {
+                                newTourRef  = adminOnlyRef.push({
+                                    description: descriptionValue,
+                                    length: numRows,
+                                    name: titleValue,
+                                    preview_image: fileName
                                 });
-                                existingTours[titleValue]["stops"][stop]["media"][asset]["id"] = newAssetsRef.key;
-                                existingTours[titleValue]["stops"][stop]["media"][asset]["stopID"] = stopId;
+                            } else {
+                                newTourRef = toursRef.push({
+                                    description: descriptionValue,
+                                    length: numRows,
+                                    name: titleValue,
+                                    preview_image: fileName
+                                });
+                            }
+
+
+                             // saving all of the stop informations to the tour
+                             // first gets a reference to the tour database key
+                             let tourId = newTourRef.key;
+                             var stop;
+                             //iterating through the stops
+                             for (stop of Object.keys(addedStops)) {
+                                //pushes to the database the tour object
+                                var newStopRef = stopsRef.child(tourId).push({
+                                    description: sanitizeForDatabase(addedStops[stop]["description"]),
+                                    lat: addedStops[stop]["location"]["lat"],
+                                    lng: addedStops[stop]["location"]["lng"],
+                                    name: addedStops[stop]["title"],
+                                    id: stop,
+                                    stop_order: addedStops[stop]["stop_order"]
+                                })
+
+                                //adding the stops from the tour
+                                let stopId = newStopRef.key;
+                                var newAddedMedia = addedStops[stop]["media"];
+                                var asset;
+
+                                for(asset of Object.keys(newAddedMedia)) {
+                                    var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
+                                        description: newAddedMedia[asset]["caption"],
+                                        name: asset,
+                                        storage_name: newAddedMedia[asset]["storage_name"]
+                                    });
+                                }
+
+                                // TODO: update the objects to contain the keys
                             }
                         }
-                   }
-                }
-                currentTourUnderEdit = "";
+                        // $("#existing-stops").empty(); // clear the stops dropdown so stops cannot be reused
+                        clearTourFields();
 
-                document.getElementById("delete-tour").style.visibility = "hidden";
-            } else { // adding a new tour to the database
-                // save the tour
-                existingTours[titleValue] = {
-                    "description": descriptionValue,
-                    "stops": addedStops,
-                    "isAdminOnly": isAdminOnly,
-                    "preview": preview.src
-                };
-
-                // make an option in the edit tour modal's dropdown
-                var editTourSelect = document.getElementById("edit-existing-tour");
-                var option = document.createElement('option');
-                option.text = option.value = titleValue;
-                editTourSelect.add(option);
-
-                // TODO: upload entire tour
-                var databaseRef = firebase.database().ref();
-                var toursRef = databaseRef.child("tours");
-                var stopsRef = databaseRef.child("stops");
-                //get reference to database for assets
-                var assetsRef = databaseRef.child("assets");
-                var adminOnlyRef = databaseRef.child("admin_only_tour");
-
-                var newTourRef;
-                if (isAdminOnly === "true") {
-                    newTourRef  = adminOnlyRef.push({
-                        description: descriptionValue,
-                        length: numRows,
-                        name: titleValue,
-                        preview_image: fileName
-                    });
-                } else {
-                    newTourRef = toursRef.push({
-                        description: descriptionValue,
-                        length: numRows,
-                        name: titleValue,
-                        preview_image: fileName
-                    });
-                }
-
-
-                 // saving all of the stop informations to the tour
-                 // first gets a reference to the tour database key
-                 let tourId = newTourRef.key;
-                 existingTours["databaseID"] = tourId; // remember the databaseID in tours
-                 var stop;
-                 //iterating through the stops
-                 for (stop of Object.keys(addedStops)) {
-                    //pushes to the database the tour object
-                    var newStopRef = stopsRef.child(tourId).push({
-                        description: sanitizeForDatabase(addedStops[stop]["description"]),
-                        lat: addedStops[stop]["location"]["lat"],
-                        lng: addedStops[stop]["location"]["lng"],
-                        name: addedStops[stop]["title"],
-                        id: stop,
-                        stop_order: addedStops[stop]["stop_order"]
-                    });
-
-                    //adding the stops from the tour
-                    let stopId = newStopRef.key;
-                    existingTours[stop]["databaseID"] = stopId;
-                    existingTours[stop]["tourID"] = tourId;
-                    var newAddedMedia = addedStops[stop]["media"];
-                    var asset;
-
-                    for(asset of Object.keys(newAddedMedia)) {
-                        var newAssetsRef = assetsRef.child(stopId).child(newAddedMedia[asset].id).set({
-                            description: newAddedMedia[asset]["caption"],
-                            name: asset,
-                            storage_name: newAddedMedia[asset]["storage_name"]
-                        });
-                        existingTours[stop][media]["id"] = newAssetsRef.key;
-                        existingTours[stop][media]["stopID"] = stopId;
+                        // navigate back to the home page
+                        $('#nav-pills a[href="#home-page"]').tab('show');
                     }
-                }
-            }
-            // $("#existing-stops").empty(); // clear the stops dropdown so stops cannot be reused
-            clearTourFields();
-
-            // navigate back to the home page
-            $('#nav-pills a[href="#home-page"]').tab('show');
-        }
-    });
-
-    // clicking a row in the stop table highlights it
-    $('#stop-table').on('click', '.clickable-row', function(e) {
-        $(this).addClass('bg-info').siblings().removeClass('bg-info');
-    });
-
-    // confirming add stop puts it in the table
-    $('#confirm-add-stop').click(function() {
-        var existingStopSelect = document.getElementById("existing-stops");
-        var selectedStop = existingStopSelect.value;
-        if (!selectedStop) {
-            $("#existing-stops").popover('dispose');
-            $("#existing-stops").popover({ title: 'Error', content: "Select a stop to add to the tour"});
-            $("#existing-stops").popover('show'); // bring up the popover
-        } else if (Object.keys(addedStops).includes(selectedStop)) { // this media item is already added to the stop
-            $("#existing-stops").popover('dispose');
-            $("#existing-stops").popover({ title: 'Error', content: "This stop was already added to the tour"});
-            $("#existing-stops").popover('show'); // bring up the popover
-        } else {
-            updateStopTable(selectedStop);
-            // restore default for the select existing media dropdown
-            document.getElementById("select-stop-default").selected = true;
-            $('#add-stop-popup').modal('hide');
-        }
-    });
-
-    // Remove the warning next time the existing-stops dropdown box is changed
-    $('#existing-stops').on('change', function() {
-        $("#existing-stops").popover('dispose');
-    });
-    // Remove the warning next time when existing-media modal is closed
-    $('#add-stop-popup').on('hide.bs.modal', function() {
-        $("#existing-stops").popover('dispose');
-    });
-
-    // remove a stop item from the table
-    $('#confirm-remove-stop').click(function() {
-        var tableBody = document.getElementById("tour-stops");
-        var selectedRow = document.querySelector('#tour-stops > .bg-info');
-        var name = selectedRow.cells[1].innerHTML;
-        tableBody.removeChild(selectedRow);
-        var removedStopOrder = addedStops[name]["stop_order"];
-        delete addedStops[name];
-
-        // readjust the "stop_order" in addedStops
-        for (stop of Object.keys(addedStops)) {
-            if (addedStops[stop]["stop_order"] > removedStopOrder) {
-                addedStops[stop]["stop_order"] = addedStops[stop]["stop_order"] - 1;
-            }
-        }
-
-        // readd items to the table in order
-        stopTableBody = document.getElementById("tour-stops");
-        stopTableBody.innerHTML = "";
-        var stops = Object.keys(addedStops);
-        for (var i = 1; i <= stops.length; i++) {
-            for (var j = 0; j < stops.length; j++) {
-                if (addedStops[stops[j]]["stop_order"]===i) { // add items in order 1+
-                    updateStopTable(stops[j]);
-                }
-            }
-        }
-    });
-
-    // move an item up in the table
-    $('#stop-up').click(function(){
-        moveTableRowUp("tour-stops")
-    });
-
-    // move an item down in the table
-    $('#stop-down').click(function(){
-        moveTableRowDown("tour-stops")
-    });
-
-    $('#confirm-delete-tour').click(function() {
-        // TODO: check if checkbox is clicked, close modal if so
-        var checkbox = document.getElementById("checkbox-delete-tour");
-        if (checkbox.checked) { // if the checkbox to confirm they've read the warning message is checked
-            // get the tour's name from the edit select in case they've changed it on the edit page
-            editTourSelect = document.getElementById("edit-existing-tour");
-            name = editTourSelect.value;
-            tour = existingTours[name];
-            // remove from edit tour drop down
-            editTourSelect.remove(editTourSelect.selectedIndex);
-
-            // references to be used to delete tour from database
-            var databaseRef = firebase.database().ref();
-            var toursRef = databaseRef.child('tours');
-            var stopsRef = databaseRef.child("stops");
-            var assetsRef = databaseRef.child("assets");
-            var adminOnlyRef = databaseRef.child("admin_only_tour");
-            var storageRef = firebase.storage().ref();
-
-            for (stopName of Object.keys(tour["stops"])) { // go through the stops
-                stop = tour["stops"][stopName];
-                for (mediaName of Object.keys(stop["media"])) { // go though the media assets
-                    media = stop["media"][mediaName];
-                    // delete the image from storage
-                    var fileLoc = 'images/' + media['storage_name'];
-                    storageRef.child(fileLoc).delete().then(function() {
-                        // File deleted successfully
-                        console.log("deleted ", fileLoc)
-                    }).catch(function(error) {
-                        // Uh-oh, an error occurred!
-                        console.log("failed to delete ", fileLoc)
-                    });
-                    // delete the asset
-                    assetsRef.child(media["stopID"]).remove();
-                }
-                // delete the stop
-                stopsRef.child(stop["tourID"]).remove();
-            }
-            // delete the tour preview image from storage
-            var fileLoc = 'images/' + tour['storage_name'];
-            storageRef.child(fileLoc).delete().then(function() {
-                // File deleted successfully
-                console.log("deleted ", fileLoc)
-            }).catch(function(error) {
-                // Uh-oh, an error occurred!
-                console.log("failed to delete ", fileLoc)
-            });
-
-            if (tour["isAdminOnly" === "true"]) { // delete admin only tours {
-                adminOnlyRef.child(tour["databaseID"]).remove();
-            } else {
-                // delete the tour
-                toursRef.child(tour["databaseID"]).remove();
-            }
-
-
-            // clear fields, uncheck checkbox, hide modal, hide delete button, return to home
-            clearTourFields();
-            checkbox.checked = false;
-            $('#delete-tour-popup').modal('hide');
-            document.getElementById("delete-tour").style.visibility = "hidden";
-            $('#nav-pills a[href="#home-page"]').tab('show');
-        }
-    });
-
-    // MARK: stop page event listeners
-
-    // On the stop page, the "Create new media" button
-    // takes us to the media page
-    $('#create-media').click(function(e){
-        e.preventDefault();
-        // clearMediaFields(); // TODO: is this expected behavior?
-        $('#nav-pills a[href="#media-page"]').tab('show');
-    });
-
-
-
-    // On the stop page, the "Save stop" button returns us
-    // to the tour page
-    $('#save-stop').click(function(e) {
-        e.preventDefault();
-        var title = document.getElementById("stop-title");
-        /*//var description = getHtmlFromEditor();//document.getElementById("stop-description"); // here max - preparing to save
-        var titleValue = title.value;
-        var descriptionValue = getHtmlFromEditor();//description.value;*/
-        //var description = document.getElementById("stop-description"); // here max - preparing to save
-        var idField = document.getElementById("stop-id");
-        var titleValue = title.value;
-        var descriptionValue = getHtmlFromEditor();
-        var idValue = idField.value;
-
-
-        if (!titleValue) { // there must be a title
-            $("#stop-title").popover('dispose');
-            $("#stop-title").popover({ title: 'Error', content: "Title required"});
-            $("#stop-title").popover('show');
-        } else if (!idValue) {
-            $("#stop-id").popover('dispose');
-            $("#stop-id").popover({ title: 'Error', content: "id required"});
-            $("#stop-id").popover('show');
-        } else if (Object.keys(existingStops).includes(idValue) && !editMode) { // title must be unique unless in edit mode
-            $("#stop-id").popover('dispose');
-            $("#stop-id").popover({ title: 'Error', content: "Id must be unique"});
-            $("#stop-id").popover('show');
-        } else if (!selectedLocation) { // there must be a location
-            $("#stop-map").popover('dispose');
-            $("#stop-map").popover({ title: 'Error',
-                                    content: "A location must be selected",
-                                    offset: "85"});
-            $("#stop-map").popover('show');
-        } else {
-            // save the stop
-            //determine if the stop already exists
-            if (existingStops[idValue] == undefined) {
-                existingStops[idValue] = {
-                    "description": descriptionValue,
-                    "media": addedMedia,
-                    "location": {
-                        lat: selectedLocation.position.lat(),
-                        lng: selectedLocation.position.lng()
-                    },
-                    "id": idValue,
-                    "title": titleValue
-                };
-            }
-            else {
-                //we are editing an existing stop
-                existingStops[idValue]["description"] = descriptionValue;
-                existingStops[idValue]["media"] = addedMedia;
-                existingStops[idValue]["location"]["lat"] = selectedLocation.position.lat();
-                existingStops[idValue]["location"]["lng"] = selectedLocation.position.lng();
-                existingStops[idValue]["id"] = idValue;
-                existingStops[idValue]["title"] = titleValue;
-            }
-
-            clearStopFields();
-
-            if (startEdit == "stop") { // we were editing a stop, return to home page
-                $('#nav-pills a[href="#home-page"]').tab('show');
-                editMode = false;
-                startEdit = undefined;
-
-                //post to the DB
-                if (existingStops[idValue].databaseID != undefined && existingStops[idValue].tourID != undefined && existingStops[idValue].stop_order != undefined) {
-                    var stopRef = firebase.database().ref("stops");
-                    stopRef.child(existingStops[idValue].tourID).child(existingStops[idValue].databaseID).set({
-                        description: sanitizeForDatabase(descriptionValue),
-                        id: idValue,
-                        lat: existingStops[idValue]["location"]["lat"],
-                        lng: existingStops[idValue]["location"]["lng"],
-                        name: titleValue,
-                        stop_order: existingStops[idValue].stop_order
-                    });
-                }
-                currentStopUnderEdit = "";
-
-            } else { // make drop down options, navigate back to the tour page
-                // make an option in the add stop modal's dropdown
-                var existingMediaSelect = document.getElementById("existing-stops");
-                var option = document.createElement('option');
-                option.text = option.value = idValue;
-                option.selected = true; // the newly created stop should be selected
-                existingMediaSelect.add(option);
-                // make an option in the edit stop modal's dropdown
-                var editStopSelect = document.getElementById("edit-existing-stop");
-                var option = document.createElement('option');
-                option.text = option.value = idValue;
-                editStopSelect.add(option);
-
-                $('#nav-pills a[href="#tour-page"]').tab('show');
-                initTourMap()
-                $('#add-stop-popup').modal('show'); // bring back up the modal
-            }
-            // $('#existing-media').empty(); // clear the media drop down to prevent reuse
-        }
-    });
-
-    // Remove the warning next time the stop-title box is clicked
-    $('#stop-title').on('input', function(e) {
-        $("#stop-title").popover('dispose');
-    });
-
-    // Remove the warning next time the stop-id box is clicked
-    $('#stop-id').on('input', function(e) {
-        $("#stop-id").popover('dispose');
-    });
-
-    // clicking a row in the media table highlights it
-    $('#media-table').on('click', '.clickable-row', function(e) {
-        $(this).addClass('bg-info').siblings().removeClass('bg-info');
-    });
-
-    // confirming add media puts it in the table
-    // TODO: check that it isn't already in the table
-    $('#confirm-add-media').click(function() {
-        var existingMediaSelect = document.getElementById("existing-media");
-        var selectedMedia = existingMediaSelect.value;
-        if (!selectedMedia) {
-            $("#existing-media").popover('dispose');
-            $("#existing-media").popover({ title: 'Error', content: "Select media to add to the tour"});
-            $("#existing-media").popover('show'); // bring up the popover
-        } else if (Object.keys(addedMedia).includes(selectedMedia)) { // this media item is already added to the stop
-            $("#existing-media").popover('dispose');
-            $("#existing-media").popover({ title: 'Error', content: "This media was already added to the stop"});
-            $("#existing-media").popover('show'); // bring up the popover
-        } else {
-            updateMediaTable(selectedMedia, true);
-            // restore default for the select existing media dropdown
-            document.getElementById("select-media-default").selected = true;
-            $('#add-media-popup').modal('hide');
-
-            // make an option in the add media to stop description
-            var existingMediaForDescription = document.getElementById("existing-media-for-description");
-            var option = document.createElement('option');
-            option.text = option.value = selectedMedia;
-            existingMediaForDescription.add(option);
-        }
-    });
-
-    // Remove the warning next time the existing-media dropdown box is changed
-    $('#existing-media').on('change', function() {
-        $("#existing-media").popover('dispose');
-    });
-    // Remove the warning next time when existing-media modal is closed
-    $('#add-media-popup').on('hide.bs.modal', function() {
-        $("#existing-media").popover('dispose');
-    });
-
-    // remove a media item from the table
-    $('#confirm-remove-media').click(function() {
-        var tableBody = document.getElementById("stop-media");
-        var selectedRow = document.querySelector('#stop-media > .bg-info');
-        var name = selectedRow.cells[1].innerHTML;
-        tableBody.removeChild(selectedRow);
-        //remove media from description
-        removeMediaFromDescription(name);
-        //remove media from media for description selector
-        removeMediaFromDescriptionSelector(name);
-        delete addedMedia[name];
-
-
-
-    });
-
-    // MARK: media page event listeners
-
-    // On the media page, the "Upload Media" button
-    $('#upload-media').click(function(e) {
-        e.preventDefault();
-
-        var title = document.getElementById("media-title");
-        var caption = document.getElementById("media-caption");
-        var preview = document.getElementById('media-preview');
-        var titleValue = title.value;
-        var captionValue = caption.value;
-        var src = preview.src.substring(preview.src.length - 10);
-        if (!titleValue) { // there must be a title
-            $("#media-title").popover('dispose');
-            $("#media-title").popover({ title: 'Error', content: "Title required"});
-            $("#media-title").popover('show');
-        } else if (Object.keys(existingMedia).includes(titleValue) && !editMode) { // title must be unique
-            $("#media-title").popover('dispose');
-            $("#media-title").popover({ title: 'Error', content: "Title must be unique"});
-            $("#media-title").popover('show');
-        } else if (src ==="index.html") {
-            $("#media-item").popover('dispose');
-            $("#media-item").popover({ title: 'Error', content: "Image or Video required", placement: "bottom"});
-            $("#media-item").popover('show');
-        } else {
-            if (startEdit == "media") { // we were editing the item
-                var assetId = existingMedia[titleValue]["id"];
-                var stopId = existingMedia[titleValue]["stopID"];
-                var assetRef = firebase.database().ref().child("assets");
-
-                var file = document.getElementById('media-item').files[0];
-                if (file) { // if there is an image, upload it
-                    var name = file.name;
-                    var lastDot = name.lastIndexOf('.');
-                    var extension = name.substring(lastDot + 1);
-
-                    // upload the image
-                    // Create a root reference
-                    var storageRef = firebase.storage().ref();
-                    var fileName = titleValue + "." + extension;
-                    existingMedia[titleValue]["storage_name"] = fileName;
-                    var fileLoc = 'images/' + fileName;
-                    // create a child for the new file
-                    var spaceRef = storageRef.child(fileLoc);
-                    spaceRef.put(file).then(function(snapshot) {
-                        console.log('Uploaded!');
-                    });
-                }
-
-                assetRef.child(stopId).child(assetId).set({
-                    description: captionValue,
-                    name: titleValue,
-                    storage_name: titleValue + "." + name.substring(lastDot + 1)
                 });
 
-                $('#nav-pills a[href="#home-page"]').tab('show');
-                editMode = true;
-                startEdit = undefined;
-            } else { // we are creating a new item
-                // save the media item
-                let assetId = uuidv4();
-                existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": assetId};
-                var file = document.getElementById('media-item').files[0];
-                if (file) { // if there is an image, upload it
-                    var name = file.name;
-                    var lastDot = name.lastIndexOf('.');
-                    var extension = name.substring(lastDot + 1);
+                // clicking a row in the stop table highlights it
+                $('#stop-table').on('click', '.clickable-row', function(e) {
+                    $(this).addClass('bg-info').siblings().removeClass('bg-info');
+                });
 
-                    // upload the image
-                    // Create a root reference
-                    var storageRef = firebase.storage().ref();
-                    var fileName = titleValue + "." + extension;
-                    existingMedia[titleValue]["storage_name"] = fileName;
-                    console.log(fileName);
-                    var fileLoc = 'images/' + fileName;
-                    // create a child for the new file
-                    var spaceRef = storageRef.child(fileLoc);
-                    spaceRef.put(file).then(function(snapshot) {
-                        console.log('Uploaded!');
-                    });
-                    // determine if this is a new media item for an edited tour
-                    if (existingStops[currentStopUnderEdit] != undefined && existingStops[currentStopUnderEdit].databaseID != undefined) {
-                        var assetRef = firebase.database().ref().child("assets");
-                        assetRef.child(existingStops[currentStopUnderEdit].databaseID).child(assetId).set({
-                            description: captionValue,
-                            name: titleValue,
-                            storage_name: fileName
-                        });
+                // confirming add stop puts it in the table
+                $('#confirm-add-stop').click(function() {
+                    var existingStopSelect = document.getElementById("existing-stops");
+                    var selectedStop = existingStopSelect.value;
+                    if (!selectedStop) {
+                        $("#existing-stops").popover('dispose');
+                        $("#existing-stops").popover({ title: 'Error', content: "Select a stop to add to the tour"});
+                        $("#existing-stops").popover('show'); // bring up the popover
+                    } else if (Object.keys(addedStops).includes(selectedStop)) { // this media item is already added to the stop
+                        $("#existing-stops").popover('dispose');
+                        $("#existing-stops").popover({ title: 'Error', content: "This stop was already added to the tour"});
+                        $("#existing-stops").popover('show'); // bring up the popover
+                    } else {
+                        updateStopTable(selectedStop);
+                        // restore default for the select existing media dropdown
+                        document.getElementById("select-stop-default").selected = true;
+                        $('#add-stop-popup').modal('hide');
                     }
-                }
-                 // make an option in the add media modal's dropdown
-                 var existingMediaSelect = document.getElementById("existing-media");
-                 var option = document.createElement('option');
-                 option.text = option.value = titleValue;
-                 option.selected = true; // the newly created media should be selected
-                 existingMediaSelect.add(option);
-
-                 // make an option in the edit media modal's dropdown
-                 var editMediaSelect = document.getElementById("edit-existing-media");
-                 var option = document.createElement('option');
-                 option.text = option.value = titleValue;
-                 editMediaSelect.add(option)
-
-                 // navigate back to the stop page
-                 $('#nav-pills a[href="#stop-page"]').tab('show');
-                 initStopMap();
-                 $('#add-media-popup').modal('show'); // bring back up the modal
-                 $("#existing-media").popover('dispose'); // hide the warning about repeat media
-                                                     // if it exists
-            }
-            clearMediaFields();
-        }
-    });
-
-    // Remove the warning next time the media-title box is clicked
-    $('#media-title').on('input', function() {
-        $("#media-title").popover('dispose');
-    });
-
-    $('#media-item').on('input', function() {
-        $("#media-item").popover('dispose');
-    });
-
-    $('#confirm-add-media-to-description').click(function() {
-        var existingMediaSelect = document.getElementById("existing-media-for-description");
-        var selectedMedia = existingMediaSelect.value;
-        if (selectedMedia in existingMedia) {
-            let src = existingMedia[selectedMedia]['media-item'];
-            let caption = existingMedia[selectedMedia]['caption'];
-            let id = existingMedia[selectedMedia]['id'];
-
-            //add the image at the cursor location
-            if (quillEditor !== undefined) {
-                //get cursor location
-                var index = quillEditor.getLength() - 1;
-                if (cursorLocation !== undefined) {
-                    index = cursorLocation.index;
-                }
-
-                let initialLength = quillEditor.getLength();
-                quillEditor.insertEmbed(index, 'image', {
-                    src: src,
-                    id: id,
-                    class: 'quill-editor-img'
                 });
 
-                let curLength = quillEditor.getLength();
-                let offset = curLength - initialLength;
-                quillEditor.insertEmbed(index + offset, 'caption', {
-                    id: 'caption_' + id,
-                    text: caption,
-                    class: 'quill-editor-caption'
+                // Remove the warning next time the existing-stops dropdown box is changed
+                $('#existing-stops').on('change', function() {
+                    $("#existing-stops").popover('dispose');
                 });
+                // Remove the warning next time when existing-media modal is closed
+                $('#add-stop-popup').on('hide.bs.modal', function() {
+                    $("#existing-stops").popover('dispose');
+                });
+
+                // remove a stop item from the table
+                $('#confirm-remove-stop').click(function() {
+                    var tableBody = document.getElementById("tour-stops");
+                    var selectedRow = document.querySelector('#tour-stops > .bg-info');
+                    var name = selectedRow.cells[1].innerHTML;
+                    tableBody.removeChild(selectedRow);
+                    var removedStopOrder = addedStops[name]["stop_order"];
+                    delete addedStops[name];
+
+                    // readjust the "stop_order" in addedStops
+                    for (stop of Object.keys(addedStops)) {
+                        if (addedStops[stop]["stop_order"] > removedStopOrder) {
+                            addedStops[stop]["stop_order"] = addedStops[stop]["stop_order"] - 1;
+                        }
+                    }
+
+                    // readd items to the table in order
+                    stopTableBody = document.getElementById("tour-stops");
+                    stopTableBody.innerHTML = "";
+                    var stops = Object.keys(addedStops);
+                    for (var i = 1; i <= stops.length; i++) {
+                        for (var j = 0; j < stops.length; j++) {
+                            if (addedStops[stops[j]]["stop_order"]===i) { // add items in order 1+
+                                updateStopTable(stops[j]);
+                            }
+                        }
+                    }
+                });
+
+                // move an item up in the table
+                $('#stop-up').click(function(){
+                    moveTableRowUp("tour-stops")
+                });
+
+                // move an item down in the table
+                $('#stop-down').click(function(){
+                    moveTableRowDown("tour-stops")
+                });
+
+                $('#confirm-delete-tour').click(function() {
+                    // TODO: check if checkbox is clicked, close modal if so
+                    var checkbox = document.getElementById("checkbox-delete-tour");
+                    if (checkbox.checked) { // if the checkbox to confirm they've read the warning message is checked
+                        // get the tour's name from the edit select in case they've changed it on the edit page
+                        editTourSelect = document.getElementById("edit-existing-tour");
+                        name = editTourSelect.value;
+                        tour = existingTours[name];
+                        // remove from edit tour drop down
+                        editTourSelect.remove(editTourSelect.selectedIndex);
+
+                        // references to be used to delete tour from database
+                        var databaseRef = firebase.database().ref();
+                        var toursRef = databaseRef.child('tours');
+                        var stopsRef = databaseRef.child("stops");
+                        var assetsRef = databaseRef.child("assets");
+                        var adminOnlyRef = databaseRef.child("admin_only_tour");
+                        var storageRef = firebase.storage().ref();
+
+                        for (stopName of Object.keys(tour["stops"])) { // go through the stops
+                            stop = tour["stops"][stopName];
+                            for (mediaName of Object.keys(stop["media"])) { // go though the media assets
+                                media = stop["media"][mediaName];
+                                // delete the image from storage
+                                var fileLoc = 'images/' + media['storage_name'];
+                                storageRef.child(fileLoc).delete().then(function() {
+                                    // File deleted successfully
+                                    console.log("deleted ", fileLoc)
+                                }).catch(function(error) {
+                                    // Uh-oh, an error occurred!
+                                    console.log("failed to delete ", fileLoc)
+                                });
+                                // delete the asset
+                                assetsRef.child(media["stopID"]).remove();
+                            }
+                            // delete the stop
+                            stopsRef.child(stop["tourID"]).remove();
+                        }
+                        // delete the tour preview image from storage
+                        var fileLoc = 'images/' + tour['storage_name'];
+                        storageRef.child(fileLoc).delete().then(function() {
+                            // File deleted successfully
+                            console.log("deleted ", fileLoc)
+                        }).catch(function(error) {
+                            // Uh-oh, an error occurred!
+                            console.log("failed to delete ", fileLoc)
+                        });
+
+                        if (tour["isAdminOnly" === "true"]) { // delete admin only tours {
+                            adminOnlyRef.child(tour["databaseID"]).remove();
+                        } else {
+                            // delete the tour
+                            toursRef.child(tour["databaseID"]).remove();
+                        }
+
+
+                        // clear fields, uncheck checkbox, hide modal, hide delete button, return to home
+                        clearTourFields();
+                        checkbox.checked = false;
+                        $('#delete-tour-popup').modal('hide');
+                        document.getElementById("delete-tour").style.visibility = "hidden";
+                        $('#nav-pills a[href="#home-page"]').tab('show');
+                    }
+                });
+
+                // MARK: stop page event listeners
+
+                // On the stop page, the "Create new media" button
+                // takes us to the media page
+                $('#create-media').click(function(e){
+                    e.preventDefault();
+                    // clearMediaFields(); // TODO: is this expected behavior?
+                    $('#nav-pills a[href="#media-page"]').tab('show');
+                });
+
+
+
+                // On the stop page, the "Save stop" button returns us
+                // to the tour page
+                $('#save-stop').click(function(e) {
+                    e.preventDefault();
+                    var title = document.getElementById("stop-title");
+                    /*//var description = getHtmlFromEditor();//document.getElementById("stop-description"); // here max - preparing to save
+                    var titleValue = title.value;
+                    var descriptionValue = getHtmlFromEditor();//description.value;*/
+                    //var description = document.getElementById("stop-description"); // here max - preparing to save
+                    var idField = document.getElementById("stop-id");
+                    var titleValue = title.value;
+                    var descriptionValue = getHtmlFromEditor();
+                    var idValue = idField.value;
+
+
+                    if (!titleValue) { // there must be a title
+                        $("#stop-title").popover('dispose');
+                        $("#stop-title").popover({ title: 'Error', content: "Title required"});
+                        $("#stop-title").popover('show');
+                    } else if (!idValue) {
+                        $("#stop-id").popover('dispose');
+                        $("#stop-id").popover({ title: 'Error', content: "id required"});
+                        $("#stop-id").popover('show');
+                    } else if (Object.keys(existingStops).includes(idValue) && !editMode) { // title must be unique unless in edit mode
+                        $("#stop-id").popover('dispose');
+                        $("#stop-id").popover({ title: 'Error', content: "Id must be unique"});
+                        $("#stop-id").popover('show');
+                    } else if (!selectedLocation) { // there must be a location
+                        $("#stop-map").popover('dispose');
+                        $("#stop-map").popover({ title: 'Error',
+                                                content: "A location must be selected",
+                                                offset: "85"});
+                        $("#stop-map").popover('show');
+                    } else {
+                        // save the stop
+                        //determine if the stop already exists
+                        if (existingStops[idValue] == undefined) {
+                            existingStops[idValue] = {
+                                "description": descriptionValue,
+                                "media": addedMedia,
+                                "location": {
+                                    lat: selectedLocation.position.lat(),
+                                    lng: selectedLocation.position.lng()
+                                },
+                                "id": idValue,
+                                "title": titleValue
+                            };
+                        }
+                        else {
+                            //we are editing an existing stop
+                            existingStops[idValue]["description"] = descriptionValue;
+                            existingStops[idValue]["media"] = addedMedia;
+                            existingStops[idValue]["location"]["lat"] = selectedLocation.position.lat();
+                            existingStops[idValue]["location"]["lng"] = selectedLocation.position.lng();
+                            existingStops[idValue]["id"] = idValue;
+                            existingStops[idValue]["title"] = titleValue;
+                        }
+
+                        clearStopFields();
+
+                        if (startEdit == "stop") { // we were editing a stop, return to home page
+                            $('#nav-pills a[href="#home-page"]').tab('show');
+                            editMode = false;
+                            startEdit = undefined;
+
+                            //post to the DB
+                            if (existingStops[idValue].databaseID != undefined && existingStops[idValue].tourID != undefined && existingStops[idValue].stop_order != undefined) {
+                                var stopRef = firebase.database().ref("stops");
+                                stopRef.child(existingStops[idValue].tourID).child(existingStops[idValue].databaseID).set({
+                                    description: sanitizeForDatabase(descriptionValue),
+                                    id: idValue,
+                                    lat: existingStops[idValue]["location"]["lat"],
+                                    lng: existingStops[idValue]["location"]["lng"],
+                                    name: titleValue,
+                                    stop_order: existingStops[idValue].stop_order
+                                });
+                            }
+                            currentStopUnderEdit = "";
+
+                        } else { // make drop down options, navigate back to the tour page
+                            // make an option in the add stop modal's dropdown
+                            var existingMediaSelect = document.getElementById("existing-stops");
+                            var option = document.createElement('option');
+                            option.text = option.value = idValue;
+                            option.selected = true; // the newly created stop should be selected
+                            existingMediaSelect.add(option);
+                            // make an option in the edit stop modal's dropdown
+                            var editStopSelect = document.getElementById("edit-existing-stop");
+                            var option = document.createElement('option');
+                            option.text = option.value = idValue;
+                            editStopSelect.add(option);
+
+                            $('#nav-pills a[href="#tour-page"]').tab('show');
+                            initTourMap()
+                            $('#add-stop-popup').modal('show'); // bring back up the modal
+                        }
+                        // $('#existing-media').empty(); // clear the media drop down to prevent reuse
+                    }
+                });
+
+                // Remove the warning next time the stop-title box is clicked
+                $('#stop-title').on('input', function(e) {
+                    $("#stop-title").popover('dispose');
+                });
+
+                // Remove the warning next time the stop-id box is clicked
+                $('#stop-id').on('input', function(e) {
+                    $("#stop-id").popover('dispose');
+                });
+
+                // clicking a row in the media table highlights it
+                $('#media-table').on('click', '.clickable-row', function(e) {
+                    $(this).addClass('bg-info').siblings().removeClass('bg-info');
+                });
+
+                // confirming add media puts it in the table
+                // TODO: check that it isn't already in the table
+                $('#confirm-add-media').click(function() {
+                    var existingMediaSelect = document.getElementById("existing-media");
+                    var selectedMedia = existingMediaSelect.value;
+                    if (!selectedMedia) {
+                        $("#existing-media").popover('dispose');
+                        $("#existing-media").popover({ title: 'Error', content: "Select media to add to the tour"});
+                        $("#existing-media").popover('show'); // bring up the popover
+                    } else if (Object.keys(addedMedia).includes(selectedMedia)) { // this media item is already added to the stop
+                        $("#existing-media").popover('dispose');
+                        $("#existing-media").popover({ title: 'Error', content: "This media was already added to the stop"});
+                        $("#existing-media").popover('show'); // bring up the popover
+                    } else {
+                        updateMediaTable(selectedMedia, true);
+                        // restore default for the select existing media dropdown
+                        document.getElementById("select-media-default").selected = true;
+                        $('#add-media-popup').modal('hide');
+
+                        // make an option in the add media to stop description
+                        var existingMediaForDescription = document.getElementById("existing-media-for-description");
+                        var option = document.createElement('option');
+                        option.text = option.value = selectedMedia;
+                        existingMediaForDescription.add(option);
+                    }
+                });
+
+                // Remove the warning next time the existing-media dropdown box is changed
+                $('#existing-media').on('change', function() {
+                    $("#existing-media").popover('dispose');
+                });
+                // Remove the warning next time when existing-media modal is closed
+                $('#add-media-popup').on('hide.bs.modal', function() {
+                    $("#existing-media").popover('dispose');
+                });
+
+                // remove a media item from the table
+                $('#confirm-remove-media').click(function() {
+                    var tableBody = document.getElementById("stop-media");
+                    var selectedRow = document.querySelector('#stop-media > .bg-info');
+                    var name = selectedRow.cells[1].innerHTML;
+                    tableBody.removeChild(selectedRow);
+                    //remove media from description
+                    removeMediaFromDescription(name);
+                    //remove media from media for description selector
+                    removeMediaFromDescriptionSelector(name);
+                    delete addedMedia[name];
+
+
+
+                });
+
+                // MARK: media page event listeners
+
+                // On the media page, the "Upload Media" button
+                $('#upload-media').click(function(e) {
+                    e.preventDefault();
+
+                    var title = document.getElementById("media-title");
+                    var caption = document.getElementById("media-caption");
+                    var preview = document.getElementById('media-preview');
+                    var titleValue = title.value;
+                    var captionValue = caption.value;
+                    var src = preview.src.substring(preview.src.length - 10);
+                    if (!titleValue) { // there must be a title
+                        $("#media-title").popover('dispose');
+                        $("#media-title").popover({ title: 'Error', content: "Title required"});
+                        $("#media-title").popover('show');
+                    } else if (Object.keys(existingMedia).includes(titleValue) && !editMode) { // title must be unique
+                        $("#media-title").popover('dispose');
+                        $("#media-title").popover({ title: 'Error', content: "Title must be unique"});
+                        $("#media-title").popover('show');
+                    } else if (src ==="index.html") {
+                        $("#media-item").popover('dispose');
+                        $("#media-item").popover({ title: 'Error', content: "Image or Video required", placement: "bottom"});
+                        $("#media-item").popover('show');
+                    } else {
+                        if (startEdit == "media") { // we were editing the item
+                            var assetId = existingMedia[titleValue]["id"];
+                            var stopId = existingMedia[titleValue]["stopID"];
+                            var assetRef = firebase.database().ref().child("assets");
+
+                            var file = document.getElementById('media-item').files[0];
+                            if (file) { // if there is an image, upload it
+                                var name = file.name;
+                                var lastDot = name.lastIndexOf('.');
+                                var extension = name.substring(lastDot + 1);
+
+                                // upload the image
+                                // Create a root reference
+                                var storageRef = firebase.storage().ref();
+                                var fileName = titleValue + "." + extension;
+                                existingMedia[titleValue]["storage_name"] = fileName;
+                                var fileLoc = 'images/' + fileName;
+                                // create a child for the new file
+                                var spaceRef = storageRef.child(fileLoc);
+                                spaceRef.put(file).then(function(snapshot) {
+                                    console.log('Uploaded!');
+                                });
+                            }
+
+                            assetRef.child(stopId).child(assetId).set({
+                                description: captionValue,
+                                name: titleValue,
+                                storage_name: titleValue + "." + name.substring(lastDot + 1)
+                            });
+
+                            $('#nav-pills a[href="#home-page"]').tab('show');
+                            editMode = true;
+                            startEdit = undefined;
+                        } else { // we are creating a new item
+                            // save the media item
+                            let assetId = uuidv4();
+                            existingMedia[titleValue] = {"media-item": preview.src, "caption": captionValue, "id": assetId};
+                            var file = document.getElementById('media-item').files[0];
+                            if (file) { // if there is an image, upload it
+                                var name = file.name;
+                                var lastDot = name.lastIndexOf('.');
+                                var extension = name.substring(lastDot + 1);
+
+                                // upload the image
+                                // Create a root reference
+                                var storageRef = firebase.storage().ref();
+                                var fileName = titleValue + "." + extension;
+                                existingMedia[titleValue]["storage_name"] = fileName;
+                                console.log(fileName);
+                                var fileLoc = 'images/' + fileName;
+                                // create a child for the new file
+                                var spaceRef = storageRef.child(fileLoc);
+                                spaceRef.put(file).then(function(snapshot) {
+                                    console.log('Uploaded!');
+                                });
+                                //determine if this is a new media item for an edited tour
+                                if (existingStops[currentStopUnderEdit] != undefined && existingStops[currentStopUnderEdit].databaseID != undefined) {
+                                    var assetRef = firebase.database().ref().child("assets");
+                                    assetRef.child(existingStops[currentStopUnderEdit].databaseID).child(assetId).set({
+                                        description: captionValue,
+                                        name: titleValue,
+                                        storage_name: fileName
+                                    });
+                                }
+                            }
+                             // make an option in the add media modal's dropdown
+                             var existingMediaSelect = document.getElementById("existing-media");
+                             var option = document.createElement('option');
+                             option.text = option.value = titleValue;
+                             option.selected = true; // the newly created media should be selected
+                             existingMediaSelect.add(option);
+
+                             // make an option in the edit media modal's dropdown
+                             var editMediaSelect = document.getElementById("edit-existing-media");
+                             var option = document.createElement('option');
+                             option.text = option.value = titleValue;
+                             editMediaSelect.add(option)
+
+                             // navigate back to the stop page
+                             $('#nav-pills a[href="#stop-page"]').tab('show');
+                             initStopMap();
+                             $('#add-media-popup').modal('show'); // bring back up the modal
+                             $("#existing-media").popover('dispose'); // hide the warning about repeat media
+                                                                 // if it exists
+                        }
+                        clearMediaFields();
+                    }
+                });
+
+                // Remove the warning next time the media-title box is clicked
+                $('#media-title').on('input', function() {
+                    $("#media-title").popover('dispose');
+                });
+
+                $('#media-item').on('input', function() {
+                    $("#media-item").popover('dispose');
+                });
+
+                $('#confirm-add-media-to-description').click(function() {
+                    var existingMediaSelect = document.getElementById("existing-media-for-description");
+                    var selectedMedia = existingMediaSelect.value;
+                    if (selectedMedia in existingMedia) {
+                        let src = existingMedia[selectedMedia]['media-item'];
+                        let caption = existingMedia[selectedMedia]['caption'];
+                        let id = existingMedia[selectedMedia]['id'];
+
+                        //add the image at the cursor location
+                        if (quillEditor !== undefined) {
+                            //get cursor location
+                            var index = quillEditor.getLength() - 1;
+                            if (cursorLocation !== undefined) {
+                                index = cursorLocation.index;
+                            }
+
+                            let initialLength = quillEditor.getLength();
+                            quillEditor.insertEmbed(index, 'image', {
+                                src: src,
+                                id: id,
+                                class: 'quill-editor-img'
+                            });
+
+                            let curLength = quillEditor.getLength();
+                            let offset = curLength - initialLength;
+                            quillEditor.insertEmbed(index + offset, 'caption', {
+                                id: 'caption_' + id,
+                                text: caption,
+                                class: 'quill-editor-caption'
+                            });
+                        }
+                    }
+                    $('#add-image-to-description-modal').modal('hide');
+                });
+
+                //initialize the quill rich text editor for the stop description
+                initializeQuillEditor();
             }
         }
-        $('#add-image-to-description-modal').modal('hide');
     });
-
-    //initialize the quill rich text editor for the stop description
-    initializeQuillEditor();
 });
 
 
