@@ -43,203 +43,229 @@ window.addEventListener("load", function () {
 
     firebase.initializeApp(firebaseConfig);
 
+    // called when firebase.auth().signInWithEmailAndPassword happens
+    firebase.auth().onAuthStateChanged(function(user) {
+        // checks that there is user information passed
+        if (user) {
+            // makes sure the user information is actually in firebase
+            var user = firebase.auth().currentUser;
+            // if the user is a registered user in firebase
+            if (user != null) {
 
-    var tempTours;
-    var tempStops;
-    var tempMedia;
+                document.getElementById('login-content').style.display = "none";
+                document.getElementById('home-content').style.display = "block";
+                // user has signed in with the correct password
+                var tempTours;
+                var tempStops;
+                var tempMedia;
 
-    // read the existing items and populate the edit drop downs
-    firebase.database().ref('tours').once('value').then(function(snapshot) {
-        var tempTours = (snapshot.val());
-        firebase.database().ref('stops').once('value').then(function(snapshot) {
-            var tempStops = (snapshot.val());
-            firebase.database().ref('assets').once('value').then(function(snapshot) {
-                var tempMedia = (snapshot.val());
+                // read the existing items and populate the edit drop downs
+                firebase.database().ref('tours').once('value').then(function(snapshot) {
+                    var tempTours = (snapshot.val());
+                    firebase.database().ref('stops').once('value').then(function(snapshot) {
+                        var tempStops = (snapshot.val());
+                        firebase.database().ref('assets').once('value').then(function(snapshot) {
+                            var tempMedia = (snapshot.val());
 
-                for (tour of Object.keys(tempTours)) {
-                var stopItems = {};
+                            for (tour of Object.keys(tempTours)) {
+                            var stopItems = {};
 
-                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                        var mediaItems = {};
-                        var idValue = tempStops[tour][stop]["id"]
-                        if (tempMedia[stop] !== undefined) { // if the stop has media
-                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                var name = tempMedia[stop][media]["name"];
-                                mediaItems[name] = {
-                                    "caption" : tempMedia[stop][media]["description"],
-                                    "id": media,
-                                    "stopID": stop,
-                                    "storage_name": tempMedia[stop][media]["storage_name"],
+                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                    var mediaItems = {};
+                                    var idValue = tempStops[tour][stop]["id"]
+                                    if (tempMedia[stop] !== undefined) { // if the stop has media
+                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                            var name = tempMedia[stop][media]["name"];
+                                            mediaItems[name] = {
+                                                "caption" : tempMedia[stop][media]["description"],
+                                                "id": media,
+                                                "stopID": stop,
+                                                "storage_name": tempMedia[stop][media]["storage_name"],
+                                            }
+                                            existingMedia[name] = mediaItems[name];
+                                            // // make an option in the add media modal's dropdown
+                                            // var existingMediaSelect = document.getElementById("existing-media");
+                                            // var option = document.createElement('option');
+                                            // option.text = option.value = name;
+                                            // existingMediaSelect.add(option);
+
+                                            // make an option in the edit media modal's dropdown
+                                            var editMediaSelect = document.getElementById("edit-existing-media");
+                                            var option = document.createElement('option');
+                                            option.text = option.value = name;
+                                            editMediaSelect.add(option)
+                                        }
+                                        // create stop object for stop existing stops and dropdowns
+
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": mediaItems,
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    } else {
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": {},
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    }
+                                    existingStops[idValue] = stopItems[idValue];
+                                    // make an option in the add stop modal's dropdown
+                                    // var existingMediaSelect = document.getElementById("existing-stops");
+                                    // var option = document.createElement('option');
+                                    // option.text = option.value = tempStops[tour][stop]["id"];
+                                    // option.selected = true; // the newly created stop should be selected
+                                    // existingMediaSelect.add(option);
+                                    // make an option in the edit stop modal's dropdown
+                                    var editStopSelect = document.getElementById("edit-existing-stop");
+                                    var option = document.createElement('option');
+                                    option.text = option.value = tempStops[tour][stop]["id"];
+                                    editStopSelect.add(option);
                                 }
-                                existingMedia[name] = mediaItems[name];
-                                // // make an option in the add media modal's dropdown
-                                // var existingMediaSelect = document.getElementById("existing-media");
-                                // var option = document.createElement('option');
-                                // option.text = option.value = name;
-                                // existingMediaSelect.add(option);
-
-                                // make an option in the edit media modal's dropdown
-                                var editMediaSelect = document.getElementById("edit-existing-media");
+                                var name = tempTours[tour]["name"];
+                                existingTours[name] = {
+                                    "description": tempTours[tour]["description"],
+                                    "stops": stopItems,
+                                    "isAdminOnly" : "false",
+                                    "storage_name": tempTours[tour]["preview_image"],
+                                    "databaseID": tour
+                                }
+                                // make an option in the edit tour modal's dropdown
+                                var editTourSelect = document.getElementById("edit-existing-tour");
                                 var option = document.createElement('option');
                                 option.text = option.value = name;
-                                editMediaSelect.add(option)
+                                editTourSelect.add(option);
                             }
-                            // create stop object for stop existing stops and dropdowns
+                        });
+                    });
+                });
 
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": mediaItems,
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
+                // currently permission_denied
+                // read the existing admin_only items and populate the edit drop downs
+                firebase.database().ref('admin_only_tour').once('value').then(function(snapshot) {
+                    var tempTours = (snapshot.val());
+                    firebase.database().ref('stops').once('value').then(function(snapshot) {
+                        var tempStops = (snapshot.val());
+                        firebase.database().ref('assets').once('value').then(function(snapshot) {
+                            var tempMedia = (snapshot.val());
+
+                            for (tour of Object.keys(tempTours)) {
+                            var stopItems = {};
+
+                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                    var mediaItems = {};
+                                    var idValue = tempStops[tour][stop]["id"]
+                                    if (tempMedia[stop] !== undefined) { // if the stop has media
+                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                            var name = tempMedia[stop][media]["name"];
+                                            mediaItems[name] = {
+                                                "caption" : tempMedia[stop][media]["description"],
+                                                "id": media,
+                                                "stopID": stop,
+                                                "storage_name": tempMedia[stop][media]["storage_name"]
+                                            }
+                                            existingMedia[name] = mediaItems[name];
+                                            // // make an option in the add media modal's dropdown
+                                            // var existingMediaSelect = document.getElementById("existing-media");
+                                            // var option = document.createElement('option');
+                                            // option.text = option.value = name;
+                                            // existingMediaSelect.add(option);
+
+                                            // make an option in the edit media modal's dropdown
+                                            var editMediaSelect = document.getElementById("edit-existing-media");
+                                            var option = document.createElement('option');
+                                            option.text = option.value = name;
+                                            editMediaSelect.add(option)
+                                        }
+                                        // create stop object for stop existing stops and dropdowns
+
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": mediaItems,
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "tourID": tour,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    } else {
+                                        stopItems[idValue] = {
+                                            "description": tempStops[tour][stop]["description"],
+                                            "media": {},
+                                            "location": {
+                                                lat: tempStops[tour][stop]["lat"],
+                                                lng: tempStops[tour][stop]["lng"]
+                                            },
+                                            "id": idValue,
+                                            "databaseID": stop,
+                                            "title": tempStops[tour][stop]["name"],
+                                            "stop_order": tempStops[tour][stop]["stop_order"]
+                                        }
+                                    }
+                                    existingStops[idValue] = stopItems[idValue];
+                                    // make an option in the add stop modal's dropdown
+                                    // var existingMediaSelect = document.getElementById("existing-stops");
+                                    // var option = document.createElement('option');
+                                    // option.text = option.value = tempStops[tour][stop]["id"];
+                                    // option.selected = true; // the newly created stop should be selected
+                                    // existingMediaSelect.add(option);
+                                    // make an option in the edit stop modal's dropdown
+                                    var editStopSelect = document.getElementById("edit-existing-stop");
+                                    var option = document.createElement('option');
+                                    option.text = option.value = tempStops[tour][stop]["id"];
+                                    editStopSelect.add(option);
+                                }
+                                var name = tempTours[tour]["name"];
+                                existingTours[name] = {
+                                    "description": tempTours[tour]["description"],
+                                    "stops": stopItems,
+                                    "isAdminOnly" : "true",
+                                    "storage_name": tempTours[tour]["preview_image"],
+                                    "databaseID": tour
+                                }
+                                // make an option in the edit tour modal's dropdown
+                                var editTourSelect = document.getElementById("edit-existing-tour");
+                                var option = document.createElement('option');
+                                option.text = option.value = name;
+                                editTourSelect.add(option);
                             }
-                        } else {
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": {},
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        }
-                        existingStops[idValue] = stopItems[idValue];
-                        // make an option in the add stop modal's dropdown
-                        // var existingMediaSelect = document.getElementById("existing-stops");
-                        // var option = document.createElement('option');
-                        // option.text = option.value = tempStops[tour][stop]["id"];
-                        // option.selected = true; // the newly created stop should be selected
-                        // existingMediaSelect.add(option);
-                        // make an option in the edit stop modal's dropdown
-                        var editStopSelect = document.getElementById("edit-existing-stop");
-                        var option = document.createElement('option');
-                        option.text = option.value = tempStops[tour][stop]["id"];
-                        editStopSelect.add(option);
-                    }
-                    var name = tempTours[tour]["name"];
-                    existingTours[name] = {
-                        "description": tempTours[tour]["description"],
-                        "stops": stopItems,
-                        "isAdminOnly" : "false",
-                        "storage_name": tempTours[tour]["preview_image"],
-                        "databaseID": tour
-                    }
-                    // make an option in the edit tour modal's dropdown
-                    var editTourSelect = document.getElementById("edit-existing-tour");
-                    var option = document.createElement('option');
-                    option.text = option.value = name;
-                    editTourSelect.add(option);
-                }
-            });
-        });
+                        });
+                    });
+                });
+            }
+        }
     });
-
-    // currently permission_denied
-    // read the existing admin_only items and populate the edit drop downs
-    firebase.database().ref('admin_only_tours').once('value').then(function(snapshot) {
-        var tempTours = (snapshot.val());
-        firebase.database().ref('stops').once('value').then(function(snapshot) {
-            var tempStops = (snapshot.val());
-            firebase.database().ref('assets').once('value').then(function(snapshot) {
-                var tempMedia = (snapshot.val());
-
-                for (tour of Object.keys(tempTours)) {
-                  var stopItems = {};
-
-                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                        var mediaItems = {};
-                        var idValue = tempStops[tour][stop]["id"]
-                        if (tempMedia[stop] !== undefined) { // if the stop has media
-                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                var name = tempMedia[stop][media]["name"];
-                                mediaItems[name] = {
-                                    "caption" : tempMedia[stop][media]["description"],
-                                    "id": media,
-                                    "stopID": stop,
-                                    "storage_name": tempMedia[stop][media]["storage_name"]
-                                }
-                                existingMedia[name] = mediaItems[name];
-                                // // make an option in the add media modal's dropdown
-                                // var existingMediaSelect = document.getElementById("existing-media");
-                                // var option = document.createElement('option');
-                                // option.text = option.value = name;
-                                // existingMediaSelect.add(option);
-
-                                // make an option in the edit media modal's dropdown
-                                var editMediaSelect = document.getElementById("edit-existing-media");
-                                var option = document.createElement('option');
-                                option.text = option.value = name;
-                                editMediaSelect.add(option)
-                            }
-                            // create stop object for stop existing stops and dropdowns
-
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": mediaItems,
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "tourID": tour,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        } else {
-                            stopItems[idValue] = {
-                                "description": tempStops[tour][stop]["description"],
-                                "media": {},
-                                "location": {
-                                    lat: tempStops[tour][stop]["lat"],
-                                    lng: tempStops[tour][stop]["lng"]
-                                },
-                                "id": idValue,
-                                "databaseID": stop,
-                                "title": tempStops[tour][stop]["name"],
-                                "stop_order": tempStops[tour][stop]["stop_order"]
-                            }
-                        }
-                        existingStops[idValue] = stopItems[idValue];
-                        // make an option in the add stop modal's dropdown
-                        // var existingMediaSelect = document.getElementById("existing-stops");
-                        // var option = document.createElement('option');
-                        // option.text = option.value = tempStops[tour][stop]["id"];
-                        // option.selected = true; // the newly created stop should be selected
-                        // existingMediaSelect.add(option);
-                        // make an option in the edit stop modal's dropdown
-                        var editStopSelect = document.getElementById("edit-existing-stop");
-                        var option = document.createElement('option');
-                        option.text = option.value = tempStops[tour][stop]["id"];
-                        editStopSelect.add(option);
-                    }
-                    var name = tempTours[tour]["name"];
-                    existingTours[name] = {
-                        "description": tempTours[tour]["description"],
-                        "stops": stopItems,
-                        "isAdminOnly" : "true",
-                        "storage_name": tempTours[tour]["preview_image"],
-                        "databaseID": tour
-                    }
-                    // make an option in the edit tour modal's dropdown
-                    var editTourSelect = document.getElementById("edit-existing-tour");
-                    var option = document.createElement('option');
-                    option.text = option.value = name;
-                    editTourSelect.add(option);
-                }
-            });
-        });
+    var signOutButton = document.getElementById("sign-out");
+    signOutButton.addEventListener('click', function() {
+        firebase.auth().signOut().then(function() {
+            //hide home content
+            document.getElementById('login-content').style.display = "block";
+            document.getElementById('home-content').style.display = "none";
+            //delete all data from the objects
+            existingMedia = {};
+            existingStops = {};
+            existingTours = {};
+        })
     });
 
     // MARK: tab close event listeners
@@ -1762,26 +1788,23 @@ function reenterSavedDescription(selectedStop) {
 
 //runs when login button is clicked
 function login() {
-
-//gets email and password field
-var userEmail = document.getElementById("email_field").value;
-var userPass = document.getElementById("password_field").value;
-
-//checks with firebase authentication service
-firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
-  // Handle Errors here.
-  var errorCode = error.code;
-  var errorMessage = error.message;
-
-  //already has pre built error alerts through firebase
-  window.alert("Error : " + errorMessage);
-
-  // ...
-});
-
+    //gets email and password field
+    var userEmail = document.getElementById("email_field").value;
+    var userPass = document.getElementById("password_field").value;
+    //clear password and username field
+    document.getElementById("email_field").value = "";
+    document.getElementById("password_field").value = "";
+    //checks with firebase authentication service
+    firebase.auth().signInWithEmailAndPassword(userEmail, userPass).catch(function(error) {
+        // Handle Errors here.
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        //already has pre built error alerts through firebase
+        window.alert("Error : " + errorMessage);
+    });
 }
 function logout() {
-firebase.auth().signOut();
+    firebase.auth().signOut();
 }
 
 // let curLength = quillEditor.getLength();
