@@ -21,12 +21,14 @@ var addedMedia = {}, addedStops = {};
 // they are each a dictionary with keys representing titles
 var existingMedia = {}, existingStops = {}, existingTours = {};
 
+// when media is deleted from stops or stops from tours, remember what was
+// removed so we can delete it when they save.
+var removedStops = [], removedMedia = [];
+
 // this variable will hold the object that contains the quill text editor
 var quillEditor = undefined;
 // this variable holds the last known cursor location within the editor
 var cursorLocation = undefined;
-var currentStopUnderEdit = "";
-var currentTourUnderEdit = "";
 
 window.addEventListener("load", function () {
     // Initialize firebase
@@ -298,7 +300,6 @@ window.addEventListener("load", function () {
             $("#edit-existing-tour").popover('show'); // bring up the popover
         } else {
             clearTourFields();
-            currentTourUnderEdit = selectedTour;
             document.getElementById("tour-title").value = selectedTour;
             document.getElementById("tour-description").value = existingTours[selectedTour]["description"];
             document.getElementById("admin-only").value = existingTours[selectedTour]["isAdminOnly"];
@@ -352,7 +353,6 @@ window.addEventListener("load", function () {
     $('#start-edit-stop').click(function(e) {
         e.preventDefault();
         var selectedStop = document.getElementById("edit-existing-stop").value;
-        currentStopUnderEdit = selectedStop;
         if (selectedStop === "") {
             $("#edit-existing-stop").popover('dispose');
             $("#edit-existing-stop").popover({ title: 'Error', content: "Please select a stop to edit"});
@@ -479,9 +479,6 @@ window.addEventListener("load", function () {
 
         numRows = stopTable.rows.length;
 
-        // TODO: when editing, this things there isn't a title
-        // We could make the title unchangeable in editing and ignore this check
-        // Or we need to figure out a way to make this check when the value is set in js
         if (!titleValue) { // there must be a title
             $("#tour-title").popover('dispose');
             $("#tour-title").popover({ title: 'Error', content: "Title required"});
@@ -514,7 +511,7 @@ window.addEventListener("load", function () {
                 });
             }
 
-            if (editMode) {
+            if (editMode) { // editing a tour
                 editMode = false;
                 startEdit = undefined;
 
@@ -544,7 +541,7 @@ window.addEventListener("load", function () {
                     });
 
                     for (stop of Object.keys(addedStops)) {
-                        if (!stop["databaseID"]) {  // if the stop is newly added during editing
+                        if (!existingStops[stop]["databaseID"]) {  // if the stop is newly added during editing
                             // pushes the stop to the database
                             var newStopRef = stopsRef.child(tourId).push({
                                 description: sanitizeForDatabase(addedStops[stop]["description"]),
@@ -572,9 +569,47 @@ window.addEventListener("load", function () {
                                 existingTours[titleValue]["stops"][stop]["media"][asset]["stopID"] = stopId;
                             }
                         }
-                   }
+                    }
+                    // delete removed stops and their media items from the database
+                    // references to be used to delete  from database
+                    var databaseRef = firebase.database().ref();
+                    var stopsRef = databaseRef.child("stops");
+                    var assetsRef = databaseRef.child("assets");
+                    var storageRef = firebase.storage().ref();
+
+                    for (stopName of removedStops) { // go through the stops that were removed
+                        stop = existingStops[stopName];
+                        for (mediaName of Object.keys(stop["media"])) { // go though the media assets
+                            media = stop["media"][mediaName];
+                            // delete the image from storage
+                            var fileLoc = 'images/' + media['storage_name'];
+                            storageRef.child(fileLoc).delete().then(function() {
+                                // File deleted successfully
+                                console.log("deleted ", fileLoc)
+                            }).catch(function(error) {
+                                // Uh-oh, an error occurred!
+                                console.log("failed to delete ", fileLoc)
+                            });
+                            // delete the asset
+                            assetsRef.child(media["stopID"]).child(media["id"]).remove();
+                            // remove from edit drop down
+                            editMediaSelect = document.getElementById("edit-existing-media");
+                            editMediaSelect.value = mediaName;
+                            editMediaSelect.remove(editMediaSelect.selectedIndex);
+                        }
+                        // delete the stop
+                        assetsRef.child(stop["databaseID"]).remove();
+                        stopsRef.child(stop["tourID"]).child(stop["databaseID"]).remove();
+                        // remove from edit drop down
+                        editStopSelect = document.getElementById("edit-existing-stop");
+                        editStopSelect.value = stopName;
+                        editStopSelect.remove(editStopSelect.selectedIndex);
+                    }
+
+
+                    // clear list of removed stops
+                    removedStops = [];
                 }
-                currentTourUnderEdit = "";
 
                 document.getElementById("delete-tour").style.visibility = "hidden";
             } else { // adding a new tour to the database
@@ -592,7 +627,7 @@ window.addEventListener("load", function () {
                 option.text = option.value = titleValue;
                 editTourSelect.add(option);
 
-                // TODO: upload entire tour
+
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
                 var stopsRef = databaseRef.child("stops");
@@ -672,6 +707,11 @@ window.addEventListener("load", function () {
         tableBody.removeChild(selectedRow);
         var removedStopOrder = addedStops[name]["stop_order"];
         delete addedStops[name];
+        // if we are editing a tour and the stop is already in the database
+        if (startEdit === "tour" && stop["databaseID"] !== undefined) {
+            removedStops.push(name);
+        }
+
 
         // readjust the "stop_order" in addedStops
         for (stop of Object.keys(addedStops)) {
@@ -704,7 +744,6 @@ window.addEventListener("load", function () {
     });
 
     $('#confirm-delete-tour').click(function() {
-        // TODO: check if checkbox is clicked, close modal if so
         var checkbox = document.getElementById("checkbox-delete-tour");
         if (checkbox.checked) { // if the checkbox to confirm they've read the warning message is checked
             // get the tour's name from the edit select in case they've changed it on the edit page
@@ -759,11 +798,13 @@ window.addEventListener("load", function () {
                 console.log("failed to delete ", fileLoc)
             });
 
-            if (tour["isAdminOnly" === "true"]) { // delete admin only tours {
+            if (tour["isAdminOnly"] === "true") { // delete admin only tours {
                 adminOnlyRef.child(tour["databaseID"]).remove();
+                console.log("deleted an admin only tour");
             } else {
                 // delete the tour
                 toursRef.child(tour["databaseID"]).remove();
+                console.log("deleted an all users tour");
             }
 
 
@@ -782,7 +823,6 @@ window.addEventListener("load", function () {
     // takes us to the media page
     $('#create-media').click(function(e){
         e.preventDefault();
-        // clearMediaFields(); // TODO: is this expected behavior?
         $('#nav-pills a[href="#media-page"]').tab('show');
     });
 
@@ -838,9 +878,7 @@ window.addEventListener("load", function () {
                     "id": idValue,
                     "title": titleValue
                 };
-            }
-            else {
-                //we are editing an existing stop
+            } else { //we are editing an existing stop
                 existingStops[idValue]["description"] = descriptionValue;
                 existingStops[idValue]["media"] = addedMedia;
                 existingStops[idValue]["location"]["lat"] = selectedLocation.position.lat();
@@ -855,7 +893,7 @@ window.addEventListener("load", function () {
                 startEdit = undefined;
 
                 //post to the DB
-                if (existingStops[idValue].databaseID != undefined && existingStops[idValue].tourID != undefined && existingStops[idValue].stop_order != undefined) {
+                if (existingStops[idValue].databaseID !== undefined) {
                     var stopRef = firebase.database().ref("stops");
                     stopRef.child(existingStops[idValue].tourID).child(existingStops[idValue].databaseID).set({
                         description: sanitizeForDatabase(descriptionValue),
@@ -865,8 +903,46 @@ window.addEventListener("load", function () {
                         name: titleValue,
                         stop_order: existingStops[idValue].stop_order
                     });
+                    for (mediaName of Object.keys(addedMedia)) {
+                        media = existingMedia[mediaName];
+                        // determine if this is a new media item for an edited tour
+                        if (!media["stopID"]) {
+                            var assetRef = firebase.database().ref().child("assets");
+                            assetRef.child(existingStops[idValue]["databaseID"]).child(media["id"]).set({
+                                description: media["caption"],
+                                name: mediaName,
+                                storage_name: media["storage_name"]
+                            });
+                            existingMedia[mediaName]["stopID"] = existingStops[idValue]["databaseID"];
+                        }
+                    }
                 }
-                currentStopUnderEdit = "";
+
+                // delete removed media from the database
+                // references to be used to delete  from database
+                var databaseRef = firebase.database().ref();
+                var assetsRef = databaseRef.child("assets");
+                var storageRef = firebase.storage().ref();
+
+                for (mediaName of removedMedia) { // go though the media assets
+                    media = existingMedia[mediaName];
+                    // delete the image from storage
+                    var fileLoc = 'images/' + media['storage_name'];
+                    storageRef.child(fileLoc).delete().then(function() {
+                        // File deleted successfully
+                        console.log("deleted ", fileLoc)
+                    }).catch(function(error) {
+                        // Uh-oh, an error occurred!
+                        console.log("failed to delete ", fileLoc)
+                    });
+                    // delete the asset
+                    assetsRef.child(media["stopID"]).child(media["id"]).remove();
+                    // remove from edit drop down
+                    editMediaSelect = document.getElementById("edit-existing-media");
+                    editMediaSelect.value = mediaName;
+                    editMediaSelect.remove(editMediaSelect.selectedIndex);
+                }
+                removedMedia = [];
 
             } else { // new stop, add stop to table, navigate back to the tour page
                 // make an option in the edit stop modal's dropdown
@@ -905,6 +981,10 @@ window.addEventListener("load", function () {
         //remove media from media for description selector
         removeMediaFromDescriptionSelector(name);
         delete addedMedia[name];
+        // if we are editing a stop and the media has been uploaded to the database
+        if (startEdit === "stop" && existingMedia[name]["stopID"] !== undefined) {
+            removedMedia.push(name);
+        }
     });
 
     // MARK: media page event listeners
@@ -987,15 +1067,6 @@ window.addEventListener("load", function () {
                     spaceRef.put(file).then(function(snapshot) {
                         console.log('Uploaded!');
                     });
-                    // determine if this is a new media item for an edited tour
-                    if (existingStops[currentStopUnderEdit] != undefined && existingStops[currentStopUnderEdit].databaseID != undefined) {
-                        var assetRef = firebase.database().ref().child("assets");
-                        assetRef.child(existingStops[currentStopUnderEdit].databaseID).child(assetId).set({
-                            description: captionValue,
-                            name: titleValue,
-                            storage_name: fileName
-                        });
-                    }
                 }
 
                  // make an option in the edit media modal's dropdown
