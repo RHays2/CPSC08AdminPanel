@@ -637,8 +637,8 @@ window.addEventListener("load", function () {
 
                     //adding the stops from the tour
                     let stopId = newStopRef.key;
-                    existingTours[stop]["databaseID"] = stopId;
-                    existingTours[stop]["tourID"] = tourId;
+                    existingTours[titleValue]["stops"][stop]["databaseID"] = stopId;
+                    existingTours[titleValue]["stops"][stop]["tourID"] = tourId;
                     var newAddedMedia = addedStops[stop]["media"];
                     var asset;
 
@@ -648,8 +648,8 @@ window.addEventListener("load", function () {
                             name: asset,
                             storage_name: newAddedMedia[asset]["storage_name"]
                         });
-                        existingTours[stop][media]["id"] = newAssetsRef.key;
-                        existingTours[stop][media]["stopID"] = stopId;
+                        existingTours[titleValue]["stops"][stop]["media"][asset]["id"] = newAssetsRef.key;
+                        existingTours[titleValue]["stops"][stop]["media"][asset]["stopID"] = stopId;
                     }
                 }
             }
@@ -737,9 +737,17 @@ window.addEventListener("load", function () {
                     });
                     // delete the asset
                     assetsRef.child(media["stopID"]).remove();
+                    // remove from edit drop down
+                    editMediaSelect = document.getElementById("edit-existing-media");
+                    editMediaSelect.value = mediaName;
+                    editMediaSelect.remove(editMediaSelect.selectedIndex);
                 }
                 // delete the stop
                 stopsRef.child(stop["tourID"]).remove();
+                // remove from edit drop down
+                editStopSelect = document.getElementById("edit-existing-stop");
+                editStopSelect.value = stopName;
+                editStopSelect.remove(editStopSelect.selectedIndex);
             }
             // delete the tour preview image from storage
             var fileLoc = 'images/' + tour['storage_name'];
