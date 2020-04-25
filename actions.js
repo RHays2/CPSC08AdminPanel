@@ -159,35 +159,30 @@ window.addEventListener("load", function () {
                             var tempMedia = (snapshot.val());
 
                             for (tour of Object.keys(tempTours)) {
-                            var stopItems = {};
+                                var stopItems = {};
+                                if (tempStops[tour] !== undefined) {// make sure the tour has stops
+                                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                        var mediaItems = {};
+                                        var idValue = tempStops[tour][stop]["id"]
+                                        if (tempMedia[stop] !== undefined) { // make sure the stop has media
+                                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                                var name = tempMedia[stop][media]["name"];
+                                                mediaItems[name] = {
+                                                    "caption" : tempMedia[stop][media]["description"],
+                                                    "id": media,
+                                                    "stopID": stop,
+                                                    "storage_name": tempMedia[stop][media]["storage_name"]
+                                                }
+                                                existingMedia[name] = mediaItems[name];
 
-                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                                    var mediaItems = {};
-                                    var idValue = tempStops[tour][stop]["id"]
-                                    if (tempMedia[stop] !== undefined) { // if the stop has media
-                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                            var name = tempMedia[stop][media]["name"];
-                                            mediaItems[name] = {
-                                                "caption" : tempMedia[stop][media]["description"],
-                                                "id": media,
-                                                "stopID": stop,
-                                                "storage_name": tempMedia[stop][media]["storage_name"]
+                                                // make an option in the edit media modal's dropdown
+                                                var editMediaSelect = document.getElementById("edit-existing-media");
+                                                var option = document.createElement('option');
+                                                option.text = option.value = name;
+                                                editMediaSelect.add(option)
                                             }
-                                            existingMedia[name] = mediaItems[name];
-                                            // // make an option in the add media modal's dropdown
-                                            // var existingMediaSelect = document.getElementById("existing-media");
-                                            // var option = document.createElement('option');
-                                            // option.text = option.value = name;
-                                            // existingMediaSelect.add(option);
-
-                                            // make an option in the edit media modal's dropdown
-                                            var editMediaSelect = document.getElementById("edit-existing-media");
-                                            var option = document.createElement('option');
-                                            option.text = option.value = name;
-                                            editMediaSelect.add(option)
                                         }
-                                        // create stop object for stop existing stops and dropdowns
-
+                                        // create stop object for existing stops and dropdowns
                                         stopItems[idValue] = {
                                             "description": tempStops[tour][stop]["description"],
                                             "media": mediaItems,
@@ -201,25 +196,12 @@ window.addEventListener("load", function () {
                                             "title": tempStops[tour][stop]["name"],
                                             "stop_order": tempStops[tour][stop]["stop_order"]
                                         }
-                                    } else {
-                                        stopItems[idValue] = {
-                                            "description": tempStops[tour][stop]["description"],
-                                            "media": {},
-                                            "location": {
-                                                lat: tempStops[tour][stop]["lat"],
-                                                lng: tempStops[tour][stop]["lng"]
-                                            },
-                                            "id": idValue,
-                                            "databaseID": stop,
-                                            "title": tempStops[tour][stop]["name"],
-                                            "stop_order": tempStops[tour][stop]["stop_order"]
-                                        }
+                                        existingStops[idValue] = stopItems[idValue];
+                                        var editStopSelect = document.getElementById("edit-existing-stop");
+                                        var option = document.createElement('option');
+                                        option.text = option.value = tempStops[tour][stop]["id"];
+                                        editStopSelect.add(option);
                                     }
-                                    existingStops[idValue] = stopItems[idValue];
-                                    var editStopSelect = document.getElementById("edit-existing-stop");
-                                    var option = document.createElement('option');
-                                    option.text = option.value = tempStops[tour][stop]["id"];
-                                    editStopSelect.add(option);
                                 }
                                 var name = tempTours[tour]["name"];
                                 existingTours[name] = {
@@ -253,6 +235,32 @@ window.addEventListener("load", function () {
             existingTours = {};
         })
     });
+
+
+    $('#tour-title').click(function(e) {
+        if (editMode) {
+            $('#tour-title').blur();
+            $('#tour-title').popover({ title: 'Error', content: "You may not edit the tour id."});
+            $("#tour-title").popover('show'); // bring up the popover
+        }
+    });
+
+    $('#stop-id').click(function(e) {
+        if (startEdit === "stop") {
+            $('#stop-id').blur();
+            $('#stop-id').popover({ title: 'Error', content: "You may not edit the stop id."});
+            $("#stop-id").popover('show'); // bring up the popover
+        }
+    });
+
+    $('#media-title').click(function(e) {
+        if (startEdit === "media") {
+            $('#media-title').blur();
+            $('#media-title').popover({ title: 'Error', content: "You may not edit the media id."});
+            $("#media-title").popover('show'); // bring up the popover
+        }
+    });
+
 
     // MARK: tab close event listeners
     //      remove warnings when a tab is exited
@@ -833,7 +841,7 @@ window.addEventListener("load", function () {
                 existingStops[idValue]["title"] = titleValue;
             }
 
-            if (startEdit == "stop") { // we were editing a stop, return to home page
+            if (startEdit === "stop") { // we were editing a stop, return to home page
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 editMode = false;
                 startEdit = undefined;
@@ -916,7 +924,7 @@ window.addEventListener("load", function () {
             $("#media-item").popover({ title: 'Error', content: "Image or Video required", placement: "bottom"});
             $("#media-item").popover('show');
         } else {
-            if (startEdit == "media") { // we were editing the item
+            if (startEdit === "media") { // we were editing the item
                 var assetId = existingMedia[titleValue]["id"];
                 var stopId = existingMedia[titleValue]["stopID"];
                 var assetRef = firebase.database().ref().child("assets");
