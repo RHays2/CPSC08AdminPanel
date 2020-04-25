@@ -319,38 +319,8 @@ Admin Panel Web App -->
                                             </div>
                                         </div>
                                     </div>
-                                    <!--
-                                        Button and popup (modal) for adding a stop
-                                        Adding a stop takes the user to the stop screen
-                                        https://getbootstrap.com/docs/4.0/components/modal/
-                                    -->
                                     <div class="align-self-end">
-                                        <button class="btn btn-success" data-toggle="modal" data-target="#add-stop-popup" id="add-stop" type="button">Add Stop</button>
-                                        <div class="modal fade" id="add-stop-popup"  tabindex="-1" role="dialog" aria-labelledby="add-stop-modal-title" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="add-stop-modal-title">Add a stop</h5>
-                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                            <span aria-hidden="true">&times;</span>
-                                                            </button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <label for="existing-stops">Choose from previously created stops</label>
-                                                        <select name="existing-stops" id="existing-stops">
-                                                            <option selected disabled value="" id="select-stop-default">Select a stop...</option>
-                                                            <!--<option value="Stop Title">Stop Title</option>-->
-                                                        </select>
-                                                        <label for="create-stop">Or create a new stop</label>
-                                                        <button class="btn btn-success" id="create-stop" type="button" data-dismiss="modal">Create new stop</button>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button class="btn btn-dark" id="cancel-add-stop" type="button" data-dismiss="modal">Cancel</button>
-                                                        <button class="btn btn-primary" id="confirm-add-stop" type="button">Confirm</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <button class="btn btn-success" id="create-stop" type="button" data-dismiss="modal">Create new stop</button>
                                     </div>
                                 </div>
                                 <div class="row mt-3">
@@ -478,8 +448,7 @@ Admin Panel Web App -->
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
-                                                <button class="btn btn-dark" id="cancel-edit-caption" type="button" data-dismiss="modal">Cancel</button>
-                                                <button class="btn btn-primary" id="confirm-edit-caption" type="button" data-dismiss="modal">Confirm</button>
+                                                <button class="btn btn-primary" id="close-media-preview" type="button" data-dismiss="modal">Close</button>
                                             </div>
                                         </div>
                                     </div>
@@ -513,38 +482,8 @@ Admin Panel Web App -->
                                             </div>
                                         </div>
                                     </div>
-                                    <!--
-                                        Button and popup (modal) for adding a media item
-                                        Creating a new media item takes the user to the media screen
-                                        https://getbootstrap.com/docs/4.0/components/modal/
-                                    -->
                                     <div class="align-self-end">
-                                        <button class="btn btn-success" data-toggle="modal" data-target="#add-media-popup" id="add-media" type="button">Add Media</button>
-                                        <div class="modal fade" id="add-media-popup"  tabindex="-1" role="dialog" aria-labelledby="add-media-modal-title" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="add-media-modal-title">Add media to the stop</h5>
-                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                            <span aria-hidden="true">&times;</span>
-                                                            </button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <label for="existing-media">Choose from previously created media</label>
-                                                        <select name="existing-media" id="existing-media">
-                                                            <option selected disabled value="" id="select-media-default">Select a media item...</option>
-                                                            <!--<option value="Media Title">Media Title</option>-->
-                                                        </select>
-                                                        <label for="create-media">Or create a new media item</label>
-                                                        <button class="btn btn-success" id="create-media" type="button" data-dismiss="modal">Create new media</button>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button class="btn btn-dark" id="cancel-add-media" type="button" data-dismiss="modal">Cancel</button>
-                                                        <button class="btn btn-primary" id="confirm-add-media" type="button">Confirm</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <button class="btn btn-success" id="create-media" type="button" data-dismiss="modal">Create new media</button>
                                     </div>
                                 </div>
                                 <div class="row mt-4 justify-content-center">
