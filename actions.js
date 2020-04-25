@@ -30,6 +30,8 @@ var quillEditor = undefined;
 // this variable holds the last known cursor location within the editor
 var cursorLocation = undefined;
 
+var currentTab = "home"; // ["home", "tour", "stop", "media"]
+
 window.addEventListener("load", function () {
     // Initialize firebase
     const firebaseConfig = {
@@ -285,6 +287,9 @@ window.addEventListener("load", function () {
     $('#create-tour').click(function(e) {
         e.preventDefault();
         $('#nav-pills a[href="#tour-page"]').tab('show');
+        hideSignOutButton();
+        showCancelButton();
+        currentTab = "tour";
         initTourMap();
     });
 
@@ -330,6 +335,9 @@ window.addEventListener("load", function () {
 
             $('#edit-which-tour').modal('hide');
             $('#nav-pills a[href="#tour-page"]').tab('show');
+            hideSignOutButton();
+            showCancelButton();
+            currentTab = "tour";
             // show delete tour button
             document.getElementById('delete-tour').style.visibility = "visible";
             editMode = true;
@@ -384,6 +392,9 @@ window.addEventListener("load", function () {
 
             $('#edit-which-stop').modal('hide');
             $('#nav-pills a[href="#stop-page"]').tab('show');
+            currentTab = "stop";
+            showCancelButton();
+            hideSignOutButton();
             initStopMap();
             replaceMarkerAndPanTo(existingStops[selectedStop]["location"]);
             editMode = true;
@@ -440,6 +451,9 @@ window.addEventListener("load", function () {
             document.getElementById("media-caption").value = existingMedia[selectedMedia]["caption"];
             $('#edit-which-media').modal('hide');
             $('#nav-pills a[href="#media-page"]').tab('show');
+            currentTab = "media";
+            hideSignOutButton();
+            showCancelButton();
             editMode = true;
             startEdit = "media";
         }
@@ -454,6 +468,71 @@ window.addEventListener("load", function () {
         $("#edit-existing-media").popover('dispose');
     });
 
+    // Back button event listener
+    $('#cancel-back').click(function() {
+        var modalText = document.getElementById("back-warning-text");
+        if (currentTab === "tour") {
+            if (startEdit === "tour") {
+                // change the message
+                modalText.innerHTML = "Any changes made, including new stops and media, will be lost and the tour will revert to its state before editing. Do you want to go back to the home tab?"
+            } else {
+                // change the message
+                modalText.innerHTML = "The progress on this tour, including stops and media, will be lost. Do you want to go back to the home tab?"
+            }
+        } else if (currentTab === "stop") {
+            if (startEdit === "stop") {
+                // change the message
+                modalText.innerHTML = "Any changes made, including new media, will be lost and the stop will revert to its state before editing. Do you want to go back to the home tab?"
+            } else {
+                // change the message
+                modalText.innerHTML = "The progress on this stop, including added media, will be lost. Do you want to go back to the tour tab?"
+            }
+        } else if (currentTab === "media") {
+            if (startEdit === "media") {
+                // change the message
+                modalText.innerHTML = "Any changes made will be lost and the media asset will revert to its state before editing. Do you want to go back to the home tab?"
+            } else {
+                // change the message
+                modalText.innerHTML = "The progress on this media asset will be lost. Do you want to go back to the stop tab?"
+            }
+        }
+        $('#cancel-back-warning').modal('toggle');
+    });
+
+    // confirm going back button listener
+    $("#go-back").click(function() {
+        console.log("go back clicked on ", currentTab, " tab.")
+        if (currentTab === "tour") {
+            $('#nav-pills a[href="#home-page"]').tab('show');
+            clearTourFields();
+            hideCancelButton();
+            showSignOutButton();
+            currentTab = "home";
+        } else if (currentTab === "stop") {
+            if (startEdit === "stop") {
+                $('#nav-pills a[href="#home-page"]').tab('show');
+                hideCancelButton();
+                showSignOutButton();
+                currentTab = "home";
+            } else {
+                $('#nav-pills a[href="#tour-page"]').tab('show');
+                currentTab = "tour";
+            }
+            clearStopFields();
+        } else if (currentTab === "media") {
+            if (startEdit === "media") {
+                $('#nav-pills a[href="#home-page"]').tab('show');
+                hideCancelButton();
+                showSignOutButton();
+                currentTab = "home";
+            } else {
+                $('#nav-pills a[href="#stop-page"]').tab('show');
+                currentTab = "stop";
+            }
+            clearMediaFields();
+        }
+    });
+
     // MARK: tour page event listeners
 
     // On the tour page, the "Create new stop" button
@@ -461,6 +540,7 @@ window.addEventListener("load", function () {
     $('#create-stop').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#stop-page"]').tab('show');
+        currentTab = "stop";
         initStopMap();
     });
 
@@ -691,6 +771,9 @@ window.addEventListener("load", function () {
             clearTourFields();
             // navigate back to the home page
             $('#nav-pills a[href="#home-page"]').tab('show');
+            hideCancelButton();
+            showSignOutButton();
+            currentTab = "home";
         }
     });
 
@@ -814,6 +897,9 @@ window.addEventListener("load", function () {
             $('#delete-tour-popup').modal('hide');
             document.getElementById("delete-tour").style.visibility = "hidden";
             $('#nav-pills a[href="#home-page"]').tab('show');
+            hideCancelButton();
+            showSignOutButton();
+            currentTab = "home";
         }
     });
 
@@ -824,6 +910,7 @@ window.addEventListener("load", function () {
     $('#create-media').click(function(e){
         e.preventDefault();
         $('#nav-pills a[href="#media-page"]').tab('show');
+        currentTab = "media";
     });
 
     // clicking a row in the media table highlights it
@@ -889,6 +976,9 @@ window.addEventListener("load", function () {
 
             if (startEdit === "stop") { // we were editing a stop, return to home page
                 $('#nav-pills a[href="#home-page"]').tab('show');
+                hideCancelButton();
+                showSignOutButton();
+                currentTab = "home";
                 editMode = false;
                 startEdit = undefined;
 
@@ -952,6 +1042,7 @@ window.addEventListener("load", function () {
                 editStopSelect.add(option);
 
                 $('#nav-pills a[href="#tour-page"]').tab('show');
+                currentTab = "tour";
                 updateStopTable(idValue);
                 initTourMap();
             }
@@ -1043,6 +1134,9 @@ window.addEventListener("load", function () {
                 });
 
                 $('#nav-pills a[href="#home-page"]').tab('show');
+                hideCancelButton();
+                showSignOutButton();
+                currentTab = "home";
                 editMode = true;
                 startEdit = undefined;
             } else { // we are creating a new item
@@ -1077,6 +1171,7 @@ window.addEventListener("load", function () {
 
                  // navigate back to the stop page
                  $('#nav-pills a[href="#stop-page"]').tab('show');
+                 currentTab = "stop";
                  initStopMap();
                  updateMediaTable(titleValue, true);
 
@@ -1165,6 +1260,22 @@ function removeMediaWarnings() {
     $("#media-item").popover('dispose');
 }
 
+// functions for changing sign-out and cancel visibility
+function showCancelButton() {
+    document.getElementById('cancel-back').style.visibility = "visible";
+}
+
+function hideCancelButton() {
+    document.getElementById('cancel-back').style.visibility = "hidden";
+}
+
+function showSignOutButton() {
+    document.getElementById('sign-out').style.visibility = "visible";
+}
+
+function hideSignOutButton() {
+    document.getElementById('sign-out').style.visibility = "hidden";
+}
 // MARK: functions to sort table items
 
 function moveTableRowDown(tableName) {

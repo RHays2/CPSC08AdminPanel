@@ -7,6 +7,11 @@
     display: none;
 }
 
+#cancel-back {
+    position: fixed;
+    left: .5%;
+}
+
 #instructions {
     font-size: 16pt;
 
@@ -32,7 +37,7 @@
     width: 100%;
 }
 
-/* makes the table a fixed size and scrollable after 
+/* makes the table a fixed size and scrollable after
     but it is grey and ugly */
 /* .table-div {
     height: 350px;
@@ -83,9 +88,9 @@
 }
 
 .quill-editor-img {
-    width: 75%; 
-    display: block; 
-    margin-left: auto; 
+    width: 75%;
+    display: block;
+    margin-left: auto;
     margin-right: auto;
 }
 
