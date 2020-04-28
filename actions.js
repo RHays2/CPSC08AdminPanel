@@ -73,67 +73,68 @@ window.addEventListener("load", function () {
 
                             for (tour of Object.keys(tempTours)) {
                             var stopItems = {};
+                                if (tempStops[tour] !== undefined) { // if the tour has stops
+                                    for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
+                                        var mediaItems = {};
+                                        var idValue = tempStops[tour][stop]["id"]
+                                        if (tempMedia[stop] !== undefined) { // if the stop has media
+                                            for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
+                                                var name = tempMedia[stop][media]["name"];
+                                                mediaItems[name] = {
+                                                    "caption" : tempMedia[stop][media]["description"],
+                                                    "id": media,
+                                                    "stopID": stop,
+                                                    "storage_name": tempMedia[stop][media]["storage_name"],
+                                                }
+                                                existingMedia[name] = mediaItems[name];
+                                                // // make an option in the add media modal's dropdown
+                                                // var existingMediaSelect = document.getElementById("existing-media");
+                                                // var option = document.createElement('option');
+                                                // option.text = option.value = name;
+                                                // existingMediaSelect.add(option);
 
-                                for (stop of Object.keys(tempStops[tour])) { // all the stops of the current tour
-                                    var mediaItems = {};
-                                    var idValue = tempStops[tour][stop]["id"]
-                                    if (tempMedia[stop] !== undefined) { // if the stop has media
-                                        for (media of Object.keys(tempMedia[stop])) { // all the media of the current stop
-                                            var name = tempMedia[stop][media]["name"];
-                                            mediaItems[name] = {
-                                                "caption" : tempMedia[stop][media]["description"],
-                                                "id": media,
-                                                "stopID": stop,
-                                                "storage_name": tempMedia[stop][media]["storage_name"],
+                                                // make an option in the edit media modal's dropdown
+                                                var editMediaSelect = document.getElementById("edit-existing-media");
+                                                var option = document.createElement('option');
+                                                option.text = option.value = name;
+                                                editMediaSelect.add(option)
                                             }
-                                            existingMedia[name] = mediaItems[name];
-                                            // // make an option in the add media modal's dropdown
-                                            // var existingMediaSelect = document.getElementById("existing-media");
-                                            // var option = document.createElement('option');
-                                            // option.text = option.value = name;
-                                            // existingMediaSelect.add(option);
+                                            // create stop object for stop existing stops and dropdowns
 
-                                            // make an option in the edit media modal's dropdown
-                                            var editMediaSelect = document.getElementById("edit-existing-media");
-                                            var option = document.createElement('option');
-                                            option.text = option.value = name;
-                                            editMediaSelect.add(option)
+                                            stopItems[idValue] = {
+                                                "description": tempStops[tour][stop]["description"],
+                                                "media": mediaItems,
+                                                "location": {
+                                                    lat: tempStops[tour][stop]["lat"],
+                                                    lng: tempStops[tour][stop]["lng"]
+                                                },
+                                                "id": idValue,
+                                                "databaseID": stop,
+                                                "tourID": tour,
+                                                "title": tempStops[tour][stop]["name"],
+                                                "stop_order": tempStops[tour][stop]["stop_order"]
+                                            }
+                                        } else {
+                                            stopItems[idValue] = {
+                                                "description": tempStops[tour][stop]["description"],
+                                                "media": {},
+                                                "location": {
+                                                    lat: tempStops[tour][stop]["lat"],
+                                                    lng: tempStops[tour][stop]["lng"]
+                                                },
+                                                "id": idValue,
+                                                "databaseID": stop,
+                                                "tourID": tour,
+                                                "title": tempStops[tour][stop]["name"],
+                                                "stop_order": tempStops[tour][stop]["stop_order"]
+                                            }
                                         }
-                                        // create stop object for stop existing stops and dropdowns
-
-                                        stopItems[idValue] = {
-                                            "description": tempStops[tour][stop]["description"],
-                                            "media": mediaItems,
-                                            "location": {
-                                                lat: tempStops[tour][stop]["lat"],
-                                                lng: tempStops[tour][stop]["lng"]
-                                            },
-                                            "id": idValue,
-                                            "databaseID": stop,
-                                            "tourID": tour,
-                                            "title": tempStops[tour][stop]["name"],
-                                            "stop_order": tempStops[tour][stop]["stop_order"]
-                                        }
-                                    } else {
-                                        stopItems[idValue] = {
-                                            "description": tempStops[tour][stop]["description"],
-                                            "media": {},
-                                            "location": {
-                                                lat: tempStops[tour][stop]["lat"],
-                                                lng: tempStops[tour][stop]["lng"]
-                                            },
-                                            "id": idValue,
-                                            "databaseID": stop,
-                                            "tourID": tour,
-                                            "title": tempStops[tour][stop]["name"],
-                                            "stop_order": tempStops[tour][stop]["stop_order"]
-                                        }
+                                        existingStops[idValue] = stopItems[idValue];
+                                        var editStopSelect = document.getElementById("edit-existing-stop");
+                                        var option = document.createElement('option');
+                                        option.text = option.value = tempStops[tour][stop]["id"];
+                                        editStopSelect.add(option);
                                     }
-                                    existingStops[idValue] = stopItems[idValue];
-                                    var editStopSelect = document.getElementById("edit-existing-stop");
-                                    var option = document.createElement('option');
-                                    option.text = option.value = tempStops[tour][stop]["id"];
-                                    editStopSelect.add(option);
                                 }
                                 var name = tempTours[tour]["name"];
                                 existingTours[name] = {
@@ -237,6 +238,7 @@ window.addEventListener("load", function () {
             existingMedia = {};
             existingStops = {};
             existingTours = {};
+            window.location.reload(false);
         })
     });
 
@@ -508,12 +510,16 @@ window.addEventListener("load", function () {
             hideCancelButton();
             showSignOutButton();
             currentTab = "home";
+            editMode = false;
+            startEdit = undefined;
         } else if (currentTab === "stop") {
             if (startEdit === "stop") {
                 $('#nav-pills a[href="#home-page"]').tab('show');
                 hideCancelButton();
                 showSignOutButton();
                 currentTab = "home";
+                editMode = false;
+                startEdit = undefined;
             } else {
                 $('#nav-pills a[href="#tour-page"]').tab('show');
                 currentTab = "tour";
@@ -525,6 +531,8 @@ window.addEventListener("load", function () {
                 hideCancelButton();
                 showSignOutButton();
                 currentTab = "home";
+                editMode = false;
+                startEdit = undefined;
             } else {
                 $('#nav-pills a[href="#stop-page"]').tab('show');
                 currentTab = "stop";
@@ -556,7 +564,6 @@ window.addEventListener("load", function () {
         var src = preview.src.substring(preview.src.length - 10);
         var stopTable = document.getElementById("tour-stops");
         var isAdminOnly = document.getElementById("admin-only").value;
-
         numRows = stopTable.rows.length;
 
         if (!titleValue) { // there must be a title
@@ -572,34 +579,40 @@ window.addEventListener("load", function () {
             $("#tour-preview-image").popover({ title: 'Error', content: "Tour must have a preview image.", placement: "bottom"});
             $("#tour-preview-image").popover('show');
         } else {
-            // upload the preview image to the database
-            var file = document.getElementById('tour-preview-image').files[0];
-            if (file) { // if in edit mode, the file may not have been changed
-                var name = file.name;
-                var lastDot = name.lastIndexOf('.');
-                var extension = name.substring(lastDot);
-                var fileName = titleValue + extension;
-
-                // Create a root reference for uploading the preview image
-                var storageRef = firebase.storage().ref();
-                var fileLoc = 'images/' + fileName;
-                // create a child for the new file
-                var spaceRef = storageRef.child(fileLoc);
-                spaceRef.put(file).then(function(snapshot) {
-                    console.log('Uploaded!');
-                    existingTours["storage_name"] = fileLoc;
-                });
-            }
-
-            if (editMode) { // editing a tour
+            // updating a tour in the database: edit mode and it is not being moved between admin_only tours and all user tours
+            if (editMode && existingTours[titleValue]["isAdminOnly"] === isAdminOnly) {
                 editMode = false;
                 startEdit = undefined;
+                console.log("update");
 
                 existingTours[titleValue]["description"] = descriptionValue;
                 existingTours[titleValue]["stops"] = addedStops;
                 existingTours[titleValue]["isAdminOnly"] = isAdminOnly;
                 existingTours[titleValue]["preview"] = preview.src;
-                tourId = existingTours[titleValue].databaseID;
+
+                // upload the preview image to the database
+                var file = document.getElementById('tour-preview-image').files[0];
+                if (file) { // if in edit mode, the file may not have been changed
+                    console.log("file");
+                    var name = file.name;
+                    var lastDot = name.lastIndexOf('.');
+                    var extension = name.substring(lastDot);
+                    var fileName = titleValue + extension;
+
+                    // Create a root reference for uploading the preview image
+                    var storageRef = firebase.storage().ref();
+                    var fileLoc = 'images/' + fileName;
+                    if (existingTours[titleValue]) {
+                        existingTours[titleValue]["storage_name"] = fileName; // be aware - this runs even if the upload fails.
+                    }
+                    // create a child for the new file
+                    var spaceRef = storageRef.child(fileLoc);
+                    spaceRef.put(file).then(function(snapshot) {
+                        console.log('Uploaded!');
+                    });
+                }
+
+                var tourId = existingTours[titleValue].databaseID;
                 // post to the DB
                 if (tourId != undefined) { // make sure we have the databaseID
                     var toursRef;
@@ -685,61 +698,127 @@ window.addEventListener("load", function () {
                         editStopSelect.value = stopName;
                         editStopSelect.remove(editStopSelect.selectedIndex);
                     }
-
-
                     // clear list of removed stops
                     removedStops = [];
                 }
 
                 document.getElementById("delete-tour").style.visibility = "hidden";
             } else { // adding a new tour to the database
-                // save the tour
-                existingTours[titleValue] = {
-                    "description": descriptionValue,
-                    "stops": addedStops,
-                    "isAdminOnly": isAdminOnly,
-                    "preview": preview.src
-                };
-
-                // make an option in the edit tour modal's dropdown
-                var editTourSelect = document.getElementById("edit-existing-tour");
-                var option = document.createElement('option');
-                option.text = option.value = titleValue;
-                editTourSelect.add(option);
-
-
                 var databaseRef = firebase.database().ref();
                 var toursRef = databaseRef.child("tours");
                 var stopsRef = databaseRef.child("stops");
                 //get reference to database for assets
                 var assetsRef = databaseRef.child("assets");
                 var adminOnlyRef = databaseRef.child("admin_only_tour");
+                var storageRef = firebase.storage().ref();
+                console.log("create new");
 
+
+                // if we are in edit mode here, that means admin only status was changed and
+                // we need to delete the old and recreate it
+                if (editMode) {
+                    // "changing tour visibility"
+                    console.log("edit mode 721")
+                    editMode = false;
+                    startEdit = undefined;
+                    existingTours[titleValue]["description"] = descriptionValue;
+                    existingTours[titleValue]["stops"] = addedStops;
+                    existingTours[titleValue]["isAdminOnly"] = isAdminOnly;
+                    existingTours[titleValue]["preview"] = preview.src;
+                    var tourId = existingTours[titleValue].databaseID;
+                    var tour = existingTours[titleValue];
+                    for (stopName of Object.keys(tour["stops"])) { // go through the stops
+                        stop = tour["stops"][stopName];
+                        for (mediaName of Object.keys(stop["media"])) { // go though the media assets
+                            media = stop["media"][mediaName];
+                            // delete the image from storage
+                            var fileLoc = 'images/' + media['storage_name'];
+                            storageRef.child(fileLoc).delete().then(function() {
+                                // File deleted successfully
+                                console.log("deleted ", fileLoc)
+                            }).catch(function(error) {
+                                // Uh-oh, an error occurred!
+                                console.log("failed to delete ", fileLoc)
+                            });
+                            // delete the asset
+                            assetsRef.child(media["stopID"]).remove();
+                        }
+                        // delete the stop
+                        stopsRef.child(stop["tourID"]).remove();
+                    }
+                    console.log('tour["isAdminOnly"]', tour["isAdminOnly"], "749");
+                    if (tour["isAdminOnly"] === "true") { // if it is now admin-only, is was all-users
+                        toursRef.child(tour["databaseID"]).remove();
+                        console.log("deleted an admin only tour 751");
+                    } else { // if it is now all-users, it was admin-only 
+                        // delete admin only tours
+                        adminOnlyRef.child(tour["databaseID"]).remove();
+                        console.log("deleted an all users tour 755");
+                    }
+                    removedStops = [];
+                    document.getElementById("delete-tour").style.visibility = "hidden";
+                } else { // for a new tour, add it to existingTours
+                    existingTours[titleValue] = {
+                        "description": descriptionValue,
+                        "stops": addedStops,
+                        "isAdminOnly": isAdminOnly,
+                        "preview": preview.src
+                    };
+
+                    // make an option in the edit tour modal's dropdown
+                    var editTourSelect = document.getElementById("edit-existing-tour");
+                    var option = document.createElement('option');
+                    option.text = option.value = titleValue;
+                    editTourSelect.add(option);
+                }
+
+                // upload the preview image to the database
+                var file = document.getElementById('tour-preview-image').files[0];
+                if (file) { // if in edit mode, the file may not have been changed
+                    console.log("file");
+                    var name = file.name;
+                    var lastDot = name.lastIndexOf('.');
+                    var extension = name.substring(lastDot);
+                    var fileName = titleValue + extension;
+
+                    // Create a root reference for uploading the preview image
+                    var storageRef = firebase.storage().ref();
+                    var fileLoc = 'images/' + fileName;
+                    existingTours[titleValue]["storage_name"] = fileName; // be aware - this runs even if the upload fails.
+                    // create a child for the new file
+                    var spaceRef = storageRef.child(fileLoc);
+                    spaceRef.put(file).then(function(snapshot) {
+                        console.log('Uploaded!');
+                    });
+                }
+
+                // add the new tour to the database
                 var newTourRef;
+                console.log('existingTours[titleValue]["storage_name"]', existingTours[titleValue]["storage_name"]);
+                console.log("titleValue", titleValue);
                 if (isAdminOnly === "true") {
                     newTourRef  = adminOnlyRef.push({
                         description: descriptionValue,
                         length: numRows,
                         name: titleValue,
-                        preview_image: fileName
+                        preview_image: existingTours[titleValue]["storage_name"]
                     });
                 } else {
                     newTourRef = toursRef.push({
                         description: descriptionValue,
                         length: numRows,
                         name: titleValue,
-                        preview_image: fileName
+                        preview_image: existingTours[titleValue]["storage_name"]
                     });
                 }
 
-
-                 // saving all of the stop informations to the tour
-                 // first gets a reference to the tour database key
-                 let tourId = newTourRef.key;
-                 existingTours["databaseID"] = tourId; // remember the databaseID in tours
-                 var stop;
-                 //iterating through the stops
-                 for (stop of Object.keys(addedStops)) {
+                // saving all of the stop informations to the tour
+                // first gets a reference to the tour database key
+                var tourId = newTourRef.key;
+                existingTours["databaseID"] = tourId; // remember the databaseID in tours
+                var stop;
+                //iterating through the stops
+                for (stop of Object.keys(addedStops)) {
                     //pushes to the database the tour object
                     var newStopRef = stopsRef.child(tourId).push({
                         description: sanitizeForDatabase(addedStops[stop]["description"]),
@@ -794,7 +873,6 @@ window.addEventListener("load", function () {
         if (startEdit === "tour" && stop["databaseID"] !== undefined) {
             removedStops.push(name);
         }
-
 
         // readjust the "stop_order" in addedStops
         for (stop of Object.keys(addedStops)) {
@@ -1441,7 +1519,7 @@ function updateStopTable(id) {
 
     // add media name
     var cell = row.insertCell(1);
-    cell.innerHTML = addedStops[id]["title"];
+    cell.innerHTML = id;
 
     // TODO: Add event listeners when a stop is double clicked
     // to display the tour's description and a list of
@@ -1450,7 +1528,7 @@ function updateStopTable(id) {
     // add event listeners when a stop is single clicked to show its
     // location on the map
     row.addEventListener('click', function () {
-        var name = this.cells[1].innerHTML;
+        var id = this.cells[1].innerHTML;
         var stop = existingStops[id];
         replaceMarkerAndPanTo(new google.maps.LatLng(stop.location, stop.location));
     });
