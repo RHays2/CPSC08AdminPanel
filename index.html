@@ -38,6 +38,27 @@ Admin Panel Web App -->
 </head>
 
 <body>
+    <button class="btn btn-warning" data-toggle="modal" data-target="#cancel-back-warning" id="cancel-back" type="button" style="visibility:hidden">Cancel</button>
+    <div class="modal fade" id="cancel-back-warning"  tabindex="-1" role="dialog" aria-labelledby="cancel-back-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancel-back-modal-title">Cancel and go back</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body">
+                    <p id="back-warning-text"> Progress in the current tab will be lost when returning to the previous tab. </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-dark" id="stay-here" type="button" data-dismiss="modal">Stay Here</button>
+                    <button class="btn btn-primary" id="go-back" type="button" data-dismiss="modal">Go Back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div id="login-content"  style="display:block">
             <!--TODO: vertical center-->
@@ -67,6 +88,9 @@ Admin Panel Web App -->
                 </div>
             </div>
         </div>
+
+
+
         <!--
             Navigation tabs ("pills") at the top of the page
             Currently the user can navigate by clicking these or by clicking
