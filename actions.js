@@ -1443,7 +1443,7 @@ function clearStopFields() {
     //clear the image select from description
     var select = $('#existing-media-for-description');
     if (select !== null) {
-        // select.empty();
+        select.empty();
         select.append($('<option>', {
             value: 1,
             text: 'Select a media item...'
@@ -1923,13 +1923,18 @@ function reenterSavedDescription(selectedStop) {
                 if (addedMedia[media].id === doc.images[i].id) {
                     doc.images[i].src = addedMedia[media]["media-item"]
                     //add captions
-                    var captionNode = CaptionBlot.create({
-                        id: 'caption_' + addedMedia[media].id,
-                        text: addedMedia[media].caption,
-                        class: 'quill-editor-caption'
-                    });
-                    //add this under the image
-                    doc.images[i].insertAdjacentElement("afterend",captionNode);
+                    //determine if the caption is already there
+                    let cap = doc.getElementById('caption_' + addedMedia[media].id);
+                    if (cap === null) {
+                        //the caption isnt already there
+                        var captionNode = CaptionBlot.create({
+                            id: 'caption_' + addedMedia[media].id,
+                            text: addedMedia[media].caption,
+                            class: 'quill-editor-caption'
+                        });
+                        //add this under the image
+                        doc.images[i].insertAdjacentElement("afterend",captionNode);
+                    }
                 }
             }
         }
