@@ -731,15 +731,6 @@ window.addEventListener("load", function () {
                         stop = tour["stops"][stopName];
                         for (mediaName of Object.keys(stop["media"])) { // go though the media assets
                             media = stop["media"][mediaName];
-                            // delete the image from storage
-                            var fileLoc = 'images/' + media['storage_name'];
-                            storageRef.child(fileLoc).delete().then(function() {
-                                // File deleted successfully
-                                console.log("deleted ", fileLoc)
-                            }).catch(function(error) {
-                                // Uh-oh, an error occurred!
-                                console.log("failed to delete ", fileLoc)
-                            });
                             // delete the asset
                             assetsRef.child(media["stopID"]).remove();
                         }
@@ -750,7 +741,7 @@ window.addEventListener("load", function () {
                     if (tour["isAdminOnly"] === "true") { // if it is now admin-only, is was all-users
                         toursRef.child(tour["databaseID"]).remove();
                         console.log("deleted an admin only tour 751");
-                    } else { // if it is now all-users, it was admin-only 
+                    } else { // if it is now all-users, it was admin-only
                         // delete admin only tours
                         adminOnlyRef.child(tour["databaseID"]).remove();
                         console.log("deleted an all users tour 755");
